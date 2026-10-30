@@ -63,10 +63,11 @@ type DayRow = {
 
 type RepRow = { id: number; display_name: string; lane: string | null };
 
-// Per-person, per-day totals combining tickets (logged or imported) with the
-// historical days carried over from the spreadsheet. A day with tickets
-// counts as a full day worked unless history says otherwise (half-day PTO,
-// training).
+// Per-person, per-day totals combining tickets with the historical days
+// carried over from the spreadsheet. A day with tickets counts as a full day
+// worked unless history says otherwise (half-day PTO, training). Imported
+// requests that don't score are records only: they never add a day worked,
+// so importing old data can't change past scores.
 function dailyTotals(sql: Sql, from: string, to: string, userId?: number) {
   const byUser = () => (userId !== undefined ? sql`and user_id = ${userId}` : sql``);
   return sql<DayRow[]>`
@@ -77,6 +78,7 @@ function dailyTotals(sql: Sql, from: string, to: string, userId?: number) {
              sum(points)::float8 as points
         from ioms.tickets
        where user_id is not null and work_date between ${from}::date and ${to}::date
+             and (origin = 'app' or points > 0)
              ${byUser()}
        group by user_id, work_date
     ), h as (
