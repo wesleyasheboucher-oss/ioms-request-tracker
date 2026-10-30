@@ -115,9 +115,10 @@ async function setup(sql: Sql) {
   await sql.unsafe(SCHEMA);
   const username = process.env.ADMIN_USERNAME ?? "admin";
   const password = process.env.ADMIN_PASSWORD ?? "changeme";
+  const displayName = username.charAt(0).toUpperCase() + username.slice(1);
   const created = await sql`
     insert into ioms.users (username, display_name, password_hash, role)
-    select ${username}, 'Manager', ${hashPassword(password)}, 'manager'
+    select ${username}, ${displayName}, ${hashPassword(password)}, 'manager'
     where not exists (select 1 from ioms.users)
     on conflict do nothing
     returning id`;

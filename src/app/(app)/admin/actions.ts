@@ -36,15 +36,18 @@ export async function createUser(_prev: FormState, formData: FormData): Promise<
 export async function updateUser(formData: FormData) {
   const manager = await requireManager();
   const id = Number(formData.get("id"));
+  const displayName = String(formData.get("display_name") ?? "").trim();
   const role = formData.get("role") === "manager" ? "manager" : "rep";
   const lane = String(formData.get("lane") ?? "").trim() || null;
+  if (!displayName) return;
   // Managers can't demote or deactivate themselves and lock everyone out.
   const self = id === manager.id;
   const active = self || formData.get("active") === "on";
   const sql = await getDb();
   await sql`
     update ioms.users
-       set role = ${self ? "manager" : role}, lane = ${lane}, active = ${active}
+       set display_name = ${displayName}, role = ${self ? "manager" : role},
+           lane = ${lane}, active = ${active}
      where id = ${id}`;
   revalidatePath("/", "layout");
 }

@@ -75,13 +75,20 @@ function buildStanding(user: RepRow, days: DayRow[]): Standing {
   };
 }
 
+// Reps always appear. Managers appear only in weeks they logged tickets, so
+// admins who don't work tickets don't sit at the bottom with zeros.
 export async function weeklyStandings(weekStart: string): Promise<Standing[]> {
   const sql = await getDb();
+  const friday = addDays(weekStart, 4);
   const [reps, rows] = await Promise.all([
     sql<RepRow[]>`
-      select id, display_name, lane from ioms.users
-       where role = 'rep' and active
-       order by display_name`,
+      select u.id, u.display_name, u.lane from ioms.users u
+       where u.active
+         and (u.role = 'rep' or exists (
+               select 1 from ioms.tickets t
+                where t.user_id = u.id
+                  and t.work_date between ${weekStart}::date and ${friday}::date))
+       order by u.display_name`,
     dailyTotals(sql, weekStart),
   ]);
   return reps

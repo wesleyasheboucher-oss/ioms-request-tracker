@@ -59,7 +59,9 @@ export default async function AdminPage() {
         <div className="card overflow-x-auto">
           <div className="border-b border-line px-5 py-4">
             <h2 className="font-semibold">Team logins</h2>
-            <p className="text-sm text-muted">Reps appear on the leaderboard. Managers don&apos;t.</p>
+            <p className="text-sm text-muted">
+              Reps always appear on the leaderboard. Managers appear in weeks they log tickets.
+            </p>
           </div>
           <table className="w-full min-w-[640px] text-sm">
             <thead className="text-left text-xs text-muted uppercase">
@@ -79,8 +81,15 @@ export default async function AdminPage() {
                 return (
                   <tr key={u.id} className={u.active ? undefined : "opacity-55"}>
                     <td className="px-5 py-3">
-                      <p className="font-medium">{u.display_name}</p>
-                      <p className="text-xs text-muted">
+                      <input
+                        form={formId}
+                        name="display_name"
+                        defaultValue={u.display_name}
+                        aria-label="Name"
+                        required
+                        className="input w-36 py-1.5 font-medium"
+                      />
+                      <p className="mt-1 text-xs text-muted">
                         {u.username} · {u.tickets} tickets
                       </p>
                       <form id={formId} action={updateUser}>
