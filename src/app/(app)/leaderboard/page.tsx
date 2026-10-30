@@ -158,7 +158,7 @@ export default async function LeaderboardPage({ searchParams }: PageProps<"/lead
           <h2 className="mb-2 font-semibold">How scoring works</h2>
           <p className="text-muted">
             A request scores <b className="text-ink">{POINTS_PER_COMPLETED_REQUEST} pts</b> when you reached the
-            patient (or left both a voicemail and a text) and it ended as{" "}
+            patient (or left both a voicemail and a text, or no contact was required) and it ended as{" "}
             <i>Resolved – patient confirmed</i> or <i>Resolved – warm transfer to collector</i>. Score is points ÷
             days worked. You need {MIN_DAYS_TO_QUALIFY}+ days to qualify. Days of 300+ pts are held until a
             manager confirms them. Days before {formatDay(NEW_SCORING_START)} keep the points they earned under the

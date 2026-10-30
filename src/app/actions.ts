@@ -39,6 +39,7 @@ export type TicketInput = {
   patientContacted: boolean;
   voicemail: boolean;
   text: boolean;
+  contactNotRequired: boolean;
   outcome: string;
   notes: string;
 };
@@ -67,10 +68,12 @@ export async function logTicket(input: TicketInput): Promise<LogResult> {
     if (!allowed.includes(value)) return { ok: false, error: `Pick ${label}.` };
   }
 
+  const notRequired = !!input.contactNotRequired;
   const contact = {
-    patientContacted: !!input.patientContacted,
-    voicemail: !!input.voicemail,
-    text: !!input.text,
+    patientContacted: !notRequired && !!input.patientContacted,
+    voicemail: !notRequired && !!input.voicemail,
+    text: !notRequired && !!input.text,
+    notRequired,
   };
   const points = pointsFor(contact, input.outcome);
   const notes = input.notes.trim().slice(0, 500) || null;
@@ -78,9 +81,9 @@ export async function logTicket(input: TicketInput): Promise<LogResult> {
   const sql = await getDb();
   await sql`
     insert into ioms.tickets (user_id, order_id, requested_by, source, request_type,
-      patient_contacted, voicemail, text_sent, outcome, notes, points, work_date)
+      patient_contacted, voicemail, text_sent, contact_not_required, outcome, notes, points, work_date)
     values (${user.id}, ${orderId}, ${input.requestedBy}, ${input.source}, ${input.requestType},
-      ${contact.patientContacted}, ${contact.voicemail}, ${contact.text}, ${input.outcome},
+      ${contact.patientContacted}, ${contact.voicemail}, ${contact.text}, ${contact.notRequired}, ${input.outcome},
       ${notes}, ${points}, ${todayISO()}::date)`;
 
   revalidatePath("/", "layout");

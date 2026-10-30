@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { getDb, type Ticket } from "@/lib/db";
 import { addDays, formatDay, formatTime, isValidISODate, todayISO } from "@/lib/dates";
+import { contactLabel } from "@/lib/tickets";
 import { deleteTicket } from "../../actions";
 
 export default async function MyTicketsPage({ searchParams }: PageProps<"/my-tickets">) {
@@ -78,9 +79,7 @@ export default async function MyTicketsPage({ searchParams }: PageProps<"/my-tic
                   {t.notes && <p className="mt-0.5 max-w-xs text-xs text-muted">{t.notes}</p>}
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap">
-                  {[t.patient_contacted && "Spoke", t.voicemail && "VM", t.text_sent && "Text"]
-                    .filter(Boolean)
-                    .join(" + ") || <span className="text-muted">None</span>}
+                  {contactLabel(t) || <span className="text-muted">None</span>}
                 </td>
                 <td className="px-4 py-3">{t.outcome ?? t.import_status ?? "—"}</td>
                 <td className={`px-4 py-3 text-right font-semibold ${t.points ? "text-good" : "text-muted"}`}>

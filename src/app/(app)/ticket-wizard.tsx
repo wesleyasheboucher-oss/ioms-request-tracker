@@ -19,7 +19,7 @@ import {
   SCORING_OUTCOMES,
   SOURCES,
 } from "@/lib/config";
-import { contactCounts, pointsFor, scoreReason } from "@/lib/scoring";
+import { contactCounts, pointsFor, scoreReason, type ContactFlags } from "@/lib/scoring";
 import { Ghost, Pumpkin, Skeleton } from "@/components/spooky";
 import { logTicket, lookupOrder, type PriorLog, type TicketInput } from "../actions";
 
@@ -31,6 +31,7 @@ type Draft = {
   patientContacted: boolean;
   voicemail: boolean;
   text: boolean;
+  contactNotRequired: boolean;
   outcome: string | null;
   notes: string;
 };
@@ -43,6 +44,7 @@ const EMPTY: Draft = {
   patientContacted: false,
   voicemail: false,
   text: false,
+  contactNotRequired: false,
   outcome: null,
   notes: "",
 };
@@ -65,6 +67,7 @@ const CONTACT_OPTIONS = [
   { key: "patientContacted", label: "Spoke with patient", hint: "Reached them live" },
   { key: "voicemail", label: "Left voicemail", hint: "" },
   { key: "text", label: "Sent text", hint: "" },
+  { key: "contactNotRequired", label: "Not required", hint: "No patient contact needed" },
 ] as const;
 
 function isTyping(e: KeyboardEvent) {
@@ -90,7 +93,12 @@ export function TicketWizard() {
 
   const { step, reached } = pos;
   const current = STEPS[step];
-  const contact = { patientContacted: draft.patientContacted, voicemail: draft.voicemail, text: draft.text };
+  const contact = {
+    patientContacted: draft.patientContacted,
+    voicemail: draft.voicemail,
+    text: draft.text,
+    notRequired: draft.contactNotRequired,
+  };
   const points = draft.outcome ? pointsFor(contact, draft.outcome) : 0;
 
   const reset = useCallback(() => {
@@ -144,7 +152,12 @@ export function TicketWizard() {
   );
 
   const toggleContact = useCallback((key: (typeof CONTACT_OPTIONS)[number]["key"]) => {
-    setDraft((d) => ({ ...d, [key]: !d[key] }));
+    // "Not required" can't be combined with an actual contact.
+    setDraft((d) =>
+      key === "contactNotRequired"
+        ? { ...d, patientContacted: false, voicemail: false, text: false, contactNotRequired: !d.contactNotRequired }
+        : { ...d, [key]: !d[key], contactNotRequired: false },
+    );
   }, []);
 
   const submit = useCallback(() => {
@@ -355,7 +368,7 @@ function StepBody({
   i: number;
   draft: Draft;
   setDraft: Dispatch<SetStateAction<Draft>>;
-  contact: { patientContacted: boolean; voicemail: boolean; text: boolean };
+  contact: ContactFlags;
   points: number;
   pending: boolean;
   orderRef: RefObject<HTMLInputElement | null>;
@@ -418,13 +431,13 @@ function StepBody({
         <p className={`mt-3 text-sm ${contactCounts(contact) ? "text-muted" : "text-warn"}`}>
           {contactCounts(contact)
             ? "The two Resolved outcomes earn points."
-            : "Heads up: without patient contact (or voicemail + text) this won't score."}
+            : "Heads up: without patient contact (or voicemail + text, or not required) this won't score."}
         </p>
       )}
 
       {s.key === "contact" && (
         <>
-          <div className="grid gap-2 sm:grid-cols-3">
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             {CONTACT_OPTIONS.map((c, n) => (
               <OptionButton
                 key={c.key}
@@ -440,7 +453,7 @@ function StepBody({
           <p className={`mt-3 text-sm ${contactCounts(contact) ? "text-good" : "text-muted"}`}>
             {contactCounts(contact)
               ? "✓ Contact counts toward points."
-              : "Pick all that apply. To count, either speak with the patient or leave both a voicemail and a text."}
+              : "Pick all that apply. To count, speak with the patient, leave both a voicemail and a text, or mark it not required."}
           </p>
           <button className="btn-primary mt-4" onClick={onContinue}>
             Continue <span className="kbd border-transparent bg-black/15 text-current">↵</span>
@@ -489,6 +502,7 @@ function summaryFor(key: (typeof STEPS)[number]["key"], d: Draft) {
     case "orderId":
       return d.orderId.trim();
     case "contact": {
+      if (d.contactNotRequired) return "Not required";
       const parts = [d.patientContacted && "Spoke", d.voicemail && "VM", d.text && "Text"].filter(Boolean);
       return parts.length ? parts.join(" + ") : "No contact";
     }

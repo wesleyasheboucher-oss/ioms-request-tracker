@@ -26,6 +26,7 @@ export type TicketRow = {
   patient_contacted: boolean;
   voicemail: boolean;
   text_sent: boolean;
+  contact_not_required: boolean;
   outcome: string | null;
   notes: string | null;
   points: number;
@@ -58,6 +59,7 @@ export async function findTickets(f: TicketFilters, limit = TICKET_LIMIT) {
     select t.id, t.work_date, t.created_at, u.display_name, t.origin, t.import_status,
            t.order_id, t.requested_by,
            t.source, t.request_type, t.patient_contacted, t.voicemail, t.text_sent,
+           t.contact_not_required,
            t.outcome, t.notes, t.points
       from ioms.tickets t
       left join ioms.users u on u.id = t.user_id
@@ -71,7 +73,10 @@ export async function findTickets(f: TicketFilters, limit = TICKET_LIMIT) {
      limit ${limit}`;
 }
 
-export function contactLabel(t: Pick<TicketRow, "patient_contacted" | "voicemail" | "text_sent">) {
+export function contactLabel(
+  t: Pick<TicketRow, "patient_contacted" | "voicemail" | "text_sent" | "contact_not_required">,
+) {
+  if (t.contact_not_required) return "Not required";
   return [t.patient_contacted && "Spoke", t.voicemail && "VM", t.text_sent && "Text"]
     .filter(Boolean)
     .join(" + ");

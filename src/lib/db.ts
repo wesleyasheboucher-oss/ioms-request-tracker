@@ -26,6 +26,7 @@ export type Ticket = {
   patient_contacted: boolean;
   voicemail: boolean;
   text_sent: boolean;
+  contact_not_required: boolean;
   outcome: string | null;
   import_status: string | null;
   notes: string | null;
@@ -101,6 +102,7 @@ alter table ioms.tickets add column if not exists origin text not null default '
 alter table ioms.tickets add column if not exists import_id integer references ioms.imports (id) on delete cascade;
 alter table ioms.tickets add column if not exists import_key text;
 alter table ioms.tickets add column if not exists import_status text;
+alter table ioms.tickets add column if not exists contact_not_required boolean not null default false;
 create unique index if not exists tickets_import_key on ioms.tickets (import_key) where import_key is not null;
 
 -- Daily totals carried over from the Scream Team spreadsheet, scored under
