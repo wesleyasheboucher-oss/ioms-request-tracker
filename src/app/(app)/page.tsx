@@ -24,7 +24,7 @@ export default async function LogTicketPage() {
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
       <section className="min-w-0">
-        <h1 className="mb-1 text-2xl font-bold">Log a ticket</h1>
+        <h1 className="mb-1 font-spooky text-4xl tracking-wide">Log a ticket</h1>
         <p className="mb-5 text-sm text-muted">
           Finished a ticket in iOMS? Walk through it here. Takes about 15 seconds.
         </p>
@@ -76,7 +76,7 @@ export default async function LogTicketPage() {
             </Link>
           </div>
           {recent.length === 0 ? (
-            <p className="text-sm text-muted">Nothing yet. Your first ticket shows up here.</p>
+            <p className="text-sm text-muted">Nothing yet… itNothing yet. Your first ticket shows up here.apos;s quiet. Too quiet.</p>
           ) : (
             <ul className="divide-y divide-line text-sm">
               {recent.map((t) => (

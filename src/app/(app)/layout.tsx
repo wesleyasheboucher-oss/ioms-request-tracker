@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
+import { Pumpkin } from "@/components/spooky";
 import { logout } from "../actions";
 import { NavLinks } from "./nav-links";
 
@@ -9,7 +10,12 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
     { href: "/", label: "Log ticket" },
     { href: "/my-tickets", label: "My tickets" },
     { href: "/leaderboard", label: "Leaderboard" },
-    ...(user.role === "manager" ? [{ href: "/admin", label: "Admin" }] : []),
+    ...(user.role === "manager"
+      ? [
+          { href: "/admin/tickets", label: "All tickets" },
+          { href: "/admin", label: "Admin" },
+        ]
+      : []),
   ];
 
   return (
@@ -17,10 +23,8 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
       <header className="sticky top-0 z-10 border-b border-line bg-surface/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
           <div className="flex items-center gap-2 font-semibold">
-            <span className="grid size-8 place-items-center rounded-lg bg-accent text-accent-ink">
-              ◉
-            </span>
-            <span>Scream Team</span>
+            <Pumpkin className="w-9 drop-shadow-[0_0_8px_#ff7a1a88]" />
+            <span className="font-spooky text-xl tracking-wide text-accent">Scream Team</span>
             <span className="hidden text-sm font-normal text-muted sm:inline">iOMS Points</span>
           </div>
           <NavLinks links={links} />

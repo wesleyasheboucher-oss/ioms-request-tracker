@@ -1,44 +1,29 @@
 @import "tailwindcss";
 
+/* Haunted night theme. Always dark: it's Halloween all the time here. */
 :root {
-  --bg: #f6f5f3;
-  --surface: #ffffff;
-  --surface-2: #f1efec;
-  --border: #e4e1dc;
-  --text: #1c1917;
-  --muted: #6b645c;
-  --accent: #ea580c;
-  --accent-soft: #fff1e8;
-  --accent-ink: #ffffff;
-  --good: #15803d;
-  --good-soft: #e9f7ee;
-  --warn: #b45309;
-  --warn-soft: #fef5e4;
-  --bad: #b91c1c;
-  --bad-soft: #fdecec;
-  --gold: #d4a017;
-  --silver: #9ca3af;
-  --bronze: #b0703c;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #131217;
-    --surface: #1c1b22;
-    --surface-2: #25232c;
-    --border: #34313d;
-    --text: #f2f0ee;
-    --muted: #a19ba9;
-    --accent: #fb7d33;
-    --accent-soft: #3a2418;
-    --accent-ink: #1a0d05;
-    --good: #4ade80;
-    --good-soft: #15291d;
-    --warn: #fbbf24;
-    --warn-soft: #2f2612;
-    --bad: #f87171;
-    --bad-soft: #321a1c;
-  }
+  color-scheme: dark;
+  --bg: #0f0b16;
+  --surface: #1a1424;
+  --surface-2: #241b31;
+  --border: #382c4a;
+  --text: #f3eefa;
+  --muted: #a99bbd;
+  --accent: #ff7a1a;
+  --accent-soft: #3a2014;
+  --accent-ink: #1a0b02;
+  --good: #7ee36b;
+  --good-soft: #17301a;
+  --warn: #ffc94d;
+  --warn-soft: #33290f;
+  --bad: #ff5c6c;
+  --bad-soft: #3a1520;
+  --gold: #ffc94d;
+  --silver: #b8b2c8;
+  --bronze: #c9783b;
+  --ghost: #f1ecff;
+  --bone: #ece4cf;
+  --haunt: #9b6bff;
 }
 
 @theme inline {
@@ -60,33 +45,128 @@
   --color-gold: var(--gold);
   --color-silver: var(--silver);
   --color-bronze: var(--bronze);
+  --color-haunt: var(--haunt);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-spooky: var(--font-creepster);
 }
 
 body {
-  background: var(--bg);
   color: var(--text);
+  background:
+    radial-gradient(1px 1px at 12% 18%, #fff8 50%, transparent 51%),
+    radial-gradient(1px 1px at 68% 9%, #fff6 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 84% 40%, #fff5 50%, transparent 51%),
+    radial-gradient(1px 1px at 33% 62%, #fff4 50%, transparent 51%),
+    radial-gradient(1px 1px at 52% 86%, #fff4 50%, transparent 51%),
+    radial-gradient(ellipse 80% 50% at 85% -10%, #3b1f5c88, transparent 70%),
+    radial-gradient(ellipse 60% 40% at 0% 110%, #5a2a0a55, transparent 70%),
+    var(--bg);
+  background-attachment: fixed;
 }
 
 @utility card {
-  @apply rounded-2xl border border-line bg-surface;
+  @apply rounded-2xl border border-line bg-surface shadow-[0_8px_30px_-12px_#0008];
 }
 @utility btn {
   @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
 }
 @utility btn-primary {
-  @apply btn bg-accent text-accent-ink hover:brightness-110;
+  @apply btn bg-accent text-accent-ink shadow-[0_0_18px_-4px_var(--accent)] hover:-translate-y-px hover:brightness-110;
 }
 @utility btn-ghost {
   @apply btn border border-line bg-surface hover:bg-surface-2;
 }
 @utility input {
-  @apply w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-ink outline-none placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent/30;
+  @apply w-full rounded-xl border border-line bg-surface-2 px-3.5 py-2.5 text-ink outline-none placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent/30;
 }
 @utility label {
   @apply mb-1.5 block text-sm font-medium;
 }
 @utility kbd {
   @apply inline-flex h-5 min-w-5 items-center justify-center rounded-md border border-line bg-surface-2 px-1 font-mono text-[11px] text-muted;
+}
+
+/* ---------- Animations ---------- */
+
+@keyframes bob {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -10px; }
+}
+@keyframes drift {
+  from { transform: translateX(-20vw); }
+  to { transform: translateX(115vw); }
+}
+@keyframes bat-fly {
+  0% { transform: translate(-12vw, 0); }
+  30% { transform: translate(50vw, -30px); }
+  60%, 100% { transform: translate(115vw, 10px); }
+}
+@keyframes flap {
+  0%, 100% { scale: 1 1; }
+  50% { scale: 1 0.35; }
+}
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  38% { opacity: 0.75; }
+  40% { opacity: 1; }
+  62% { opacity: 0.85; }
+  78% { opacity: 0.55; }
+  80% { opacity: 1; }
+}
+@keyframes swing {
+  0%, 100% { rotate: 7deg; }
+  50% { rotate: -7deg; }
+}
+@keyframes moon-glow {
+  0%, 100% { filter: drop-shadow(0 0 18px #f6e7b566); }
+  50% { filter: drop-shadow(0 0 32px #f6e7b5aa); }
+}
+@keyframes boo-pop {
+  0% { scale: 0.2; opacity: 0; rotate: -14deg; }
+  60% { scale: 1.15; opacity: 1; rotate: 5deg; }
+  100% { scale: 1; opacity: 1; rotate: 0deg; }
+}
+@keyframes rise {
+  0% { translate: 0 0; opacity: 0; }
+  15% { opacity: 1; }
+  100% { translate: 0 -150px; opacity: 0; rotate: 25deg; }
+}
+@keyframes slide-in {
+  from { opacity: 0; translate: 0 8px; }
+  to { opacity: 1; translate: 0 0; }
+}
+@keyframes shimmer {
+  from { background-position: 0 0; }
+  to { background-position: 40px 0; }
+}
+
+.anim-bob { animation: bob 3.6s ease-in-out infinite; }
+.anim-drift { animation: drift 50s linear infinite; }
+.anim-bat-fly { animation: bat-fly 25s linear infinite; }
+.anim-flap { animation: flap 0.35s ease-in-out infinite; transform-origin: center; }
+.anim-flicker { animation: flicker 2.8s infinite; }
+.anim-swing { animation: swing 3.2s ease-in-out infinite; transform-origin: top center; }
+.anim-moon { animation: moon-glow 6s ease-in-out infinite; }
+.anim-boo { animation: boo-pop 0.6s cubic-bezier(0.3, 1.4, 0.5, 1) both; }
+.anim-rise { animation: rise 2.2s ease-out both; }
+.anim-slide-in { animation: slide-in 0.25s ease-out both; }
+
+.pumpkin-bar {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--accent) 0 10px,
+    #ff9a4a 10px 20px
+  );
+  background-size: 40px 100%;
+  animation: shimmer 1.4s linear infinite;
+  box-shadow: 0 0 10px -2px var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .anim-drift, .anim-bat-fly { display: none; }
 }

@@ -29,7 +29,7 @@ export default async function AdminPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold">Admin</h1>
+      <h1 className="font-spooky text-4xl tracking-wide">Admin</h1>
 
       {held.length > 0 && (
         <section className="card border-warn/40 p-5">

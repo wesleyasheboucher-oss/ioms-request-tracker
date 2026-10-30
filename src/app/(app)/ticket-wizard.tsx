@@ -20,6 +20,7 @@ import {
   SOURCES,
 } from "@/lib/config";
 import { contactCounts, pointsFor, scoreReason } from "@/lib/scoring";
+import { Ghost, Pumpkin, Skeleton } from "@/components/spooky";
 import { logTicket, lookupOrder, type PriorLog, type TicketInput } from "../actions";
 
 type Draft = {
@@ -217,15 +218,33 @@ export function TicketWizard() {
 
   if (done) {
     return (
-      <div className="card flex flex-col items-center px-6 py-14 text-center">
-        <div
-          className={`mb-4 grid size-20 place-items-center rounded-full text-3xl font-bold ${
-            done.points > 0 ? "bg-good-soft text-good" : "bg-surface-2 text-muted"
-          }`}
+      <div className="card relative flex flex-col items-center overflow-hidden px-6 py-12 text-center">
+        {done.points > 0 && (
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40" aria-hidden>
+            {[12, 30, 50, 68, 86].map((left, i) => (
+              <Pumpkin
+                key={left}
+                className="anim-rise absolute bottom-0 w-8"
+                style={{ left: `${left}%`, animationDelay: `${i * 0.15}s` }}
+              />
+            ))}
+          </div>
+        )}
+        {done.points > 0 ? (
+          <div className="anim-boo mb-3">
+            <Ghost className="anim-bob w-24 drop-shadow-[0_0_24px_#9b6bff99]" />
+          </div>
+        ) : (
+          <div className="anim-boo mb-3">
+            <Skeleton className="anim-swing h-28" />
+          </div>
+        )}
+        <p
+          className={`font-spooky text-5xl tracking-wide ${done.points > 0 ? "text-good" : "text-muted"}`}
         >
-          {done.points > 0 ? `+${done.points}` : "0"}
-        </div>
-        <h2 className="text-xl font-semibold">
+          {done.points > 0 ? `Boo! +${done.points}` : "+0"}
+        </p>
+        <h2 className="mt-2 text-xl font-semibold">
           {done.points > 0 ? "Completed request logged" : "Request logged"}
         </h2>
         <p className="mt-1 text-sm text-muted">
@@ -348,7 +367,7 @@ function StepBody({
   onSubmit: () => void;
 }) {
   return (
-    <div className="pb-2">
+    <div className="anim-slide-in pb-2">
       <p className="text-xs font-semibold tracking-wide text-accent uppercase">{s.title}</p>
       <h2 className="mt-0.5 mb-4 text-lg font-semibold">{s.prompt}</h2>
 
@@ -502,10 +521,10 @@ function OptionButton({
       type="button"
       onClick={onClick}
       aria-pressed={selected}
-      className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
+      className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition hover:-translate-y-0.5 ${
         selected
-          ? "border-accent bg-accent-soft"
-          : "border-line bg-surface hover:border-accent/60 hover:bg-surface-2"
+          ? "border-accent bg-accent-soft shadow-[0_0_14px_-4px_var(--accent)]"
+          : "border-line bg-surface-2 hover:border-accent/60 hover:shadow-[0_0_14px_-6px_var(--accent)]"
       }`}
     >
       <span className="kbd shrink-0">{index}</span>

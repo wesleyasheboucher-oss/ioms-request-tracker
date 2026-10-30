@@ -22,7 +22,7 @@ export default async function MyTicketsPage({ searchParams }: PageProps<"/my-tic
     <div>
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">My tickets</h1>
+          <h1 className="font-spooky text-4xl tracking-wide">My tickets</h1>
           <p className="text-sm text-muted">
             {tickets.length} logged · {completed} completed · {points} pts
           </p>
@@ -70,7 +70,7 @@ export default async function MyTicketsPage({ searchParams }: PageProps<"/my-tic
             {tickets.map((t) => (
               <tr key={t.id} className="align-top">
                 <td className="px-4 py-3 whitespace-nowrap text-muted">{formatTime(t.created_at)}</td>
-                <td className="px-4 py-3 font-mono">{t.order_id}</td>
+                <td className="px-4 py-3 font-mono whitespace-nowrap">{t.order_id}</td>
                 <td className="px-4 py-3">{t.requested_by}</td>
                 <td className="px-4 py-3">{t.source}</td>
                 <td className="px-4 py-3">
