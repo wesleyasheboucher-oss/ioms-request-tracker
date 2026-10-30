@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
-import { db, type Ticket } from "@/lib/db";
+import { getDb, type Ticket } from "@/lib/db";
 import { formatTime, todayISO } from "@/lib/dates";
 import { myWeek } from "@/lib/stats";
 import { POINTS_PER_COMPLETED_REQUEST } from "@/lib/config";
@@ -9,12 +9,15 @@ import { TicketWizard } from "./ticket-wizard";
 
 export default async function LogTicketPage() {
   const user = await requireUser();
-  const { week, today } = myWeek(user);
-  const recent = db
-    .prepare(
-      "SELECT * FROM tickets WHERE user_id = ? AND work_date = ? ORDER BY created_at DESC LIMIT 6",
-    )
-    .all(user.id, todayISO()) as Ticket[];
+  const sql = await getDb();
+  const [{ week, today }, recent] = await Promise.all([
+    myWeek(user),
+    sql<Ticket[]>`
+      select * from ioms.tickets
+       where user_id = ${user.id} and work_date = ${todayISO()}::date
+       order by created_at desc
+       limit 6`,
+  ]);
 
   const gap = week.nextTier ? week.nextTier.ptsPerDay - week.ptsPerDay : 0;
 

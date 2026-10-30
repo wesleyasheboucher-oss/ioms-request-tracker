@@ -4,28 +4,44 @@ Reps keep iOMS open, work a ticket, then log it here with a short guided flow:
 **Order ID → Requested by → Source → Request type → Patient contact → Outcome → Notes**.
 Each logged ticket is attached to the signed-in rep and scored. Scores roll up to a weekly leaderboard.
 
-## Run it
+## Database: Supabase
+
+Data is stored in a Supabase Postgres database. The app creates its tables automatically on first use,
+in their own `ioms` schema (row level security on, so Supabase's public API can't read them).
+
+1. In Supabase, click **Connect** at the top of your project and copy the **Transaction pooler** connection
+   string (port `6543`). Replace `[YOUR-PASSWORD]` with your database password
+   (reset it under Project Settings → Database if you don't have it).
+2. Use that string as `DATABASE_URL` (below).
+
+Use the transaction pooler, not the "Direct connection" string: the direct one is IPv6-only and won't
+connect from Netlify.
+
+## Environment variables
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `DATABASE_URL` | yes | Supabase transaction pooler connection string |
+| `SESSION_SECRET` | yes (production) | Long random string that signs login cookies. Generate with `openssl rand -hex 32` |
+| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | recommended | First manager login, created only when there are no users yet. Defaults to `admin` / `changeme` |
+| `APP_TIMEZONE` | no | Decides which work day a ticket counts toward. Defaults to `America/New_York` |
+
+## Deploy on Netlify
+
+1. Site configuration → **Environment variables**: add the variables above.
+2. **Deploys → Trigger deploy → Clear cache and deploy site**.
+3. Open the site, sign in with `ADMIN_USERNAME` / `ADMIN_PASSWORD`, change the password (click your name,
+   top right), then add each rep on **Admin**.
+
+## Run locally
 
 ```bash
+cp .env.example .env.local   # then fill in DATABASE_URL (SESSION_SECRET is optional locally)
 npm install
-npm run dev            # http://localhost:3000
+npm run dev                  # http://localhost:3000
 ```
 
-Production: `npm run build && npm start`.
-
-The first time it starts, it creates a manager login **admin / changeme**. Sign in, change that password
-(click your name, top right), then add each rep on **Admin**.
-
-Requires Node 22.13+ (uses the built-in `node:sqlite`). Data lives in `./data/tracker.db`. Back up that folder.
-
-### Environment variables (all optional)
-
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | `admin` / `changeme` | First manager account (used only when there are no users yet) |
-| `SESSION_SECRET` | auto-generated in `data/.session-secret` | Signs login cookies |
-| `APP_TIMEZONE` | `America/New_York` | Decides which work day a ticket counts toward |
-| `DATA_DIR` | `./data` | Where the database lives |
+Local and Netlify share the same Supabase data when they use the same `DATABASE_URL`.
 
 ## Scoring (from Scream_Team_Tracker_v4)
 

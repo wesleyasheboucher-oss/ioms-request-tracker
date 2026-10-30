@@ -1,9 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { db } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { requireManager } from "@/lib/auth";
 import { hashPassword } from "@/lib/password";
+import { isValidISODate } from "@/lib/dates";
 import type { FormState } from "../../actions";
 
 export async function createUser(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -20,12 +21,14 @@ export async function createUser(_prev: FormState, formData: FormData): Promise<
   if (!displayName) return { error: "Enter a display name." };
   if (password.length < 8) return { error: "Temporary password must be at least 8 characters." };
 
-  const exists = db.prepare("SELECT 1 FROM users WHERE username = ?").get(username);
-  if (exists) return { error: `"${username}" is already taken.` };
+  const sql = await getDb();
+  const created = await sql`
+    insert into ioms.users (username, display_name, password_hash, role, lane)
+    values (${username}, ${displayName}, ${hashPassword(password)}, ${role}, ${lane})
+    on conflict do nothing
+    returning id`;
+  if (!created.length) return { error: `"${username}" is already taken.` };
 
-  db.prepare(
-    "INSERT INTO users (username, display_name, password_hash, role, lane) VALUES (?, ?, ?, ?, ?)",
-  ).run(username, displayName, hashPassword(password), role, lane);
   revalidatePath("/", "layout");
   return { success: `Created ${displayName}. Share the temporary password with them.` };
 }
@@ -36,13 +39,13 @@ export async function updateUser(formData: FormData) {
   const role = formData.get("role") === "manager" ? "manager" : "rep";
   const lane = String(formData.get("lane") ?? "").trim() || null;
   // Managers can't demote or deactivate themselves and lock everyone out.
-  const active = id === manager.id ? 1 : formData.get("active") === "on" ? 1 : 0;
-  db.prepare("UPDATE users SET role = ?, lane = ?, active = ? WHERE id = ?").run(
-    id === manager.id ? "manager" : role,
-    lane,
-    active,
-    id,
-  );
+  const self = id === manager.id;
+  const active = self || formData.get("active") === "on";
+  const sql = await getDb();
+  await sql`
+    update ioms.users
+       set role = ${self ? "manager" : role}, lane = ${lane}, active = ${active}
+     where id = ${id}`;
   revalidatePath("/", "layout");
 }
 
@@ -51,14 +54,19 @@ export async function resetPassword(_prev: FormState, formData: FormData): Promi
   const id = Number(formData.get("id"));
   const password = String(formData.get("password") ?? "");
   if (password.length < 8) return { error: "At least 8 characters." };
-  db.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(hashPassword(password), id);
+  const sql = await getDb();
+  await sql`update ioms.users set password_hash = ${hashPassword(password)} where id = ${id}`;
   return { success: "Password reset." };
 }
 
 export async function confirmDay(formData: FormData) {
   const manager = await requireManager();
-  db.prepare(
-    "INSERT OR IGNORE INTO confirmed_days (user_id, work_date, confirmed_by) VALUES (?, ?, ?)",
-  ).run(Number(formData.get("user_id")), String(formData.get("work_date")), manager.id);
+  const workDate = String(formData.get("work_date"));
+  if (!isValidISODate(workDate)) return;
+  const sql = await getDb();
+  await sql`
+    insert into ioms.confirmed_days (user_id, work_date, confirmed_by)
+    values (${Number(formData.get("user_id"))}, ${workDate}::date, ${manager.id})
+    on conflict do nothing`;
   revalidatePath("/", "layout");
 }

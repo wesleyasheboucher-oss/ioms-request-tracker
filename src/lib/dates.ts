@@ -49,7 +49,7 @@ export function formatDay(iso: string, opts: Intl.DateTimeFormatOptions = {}) {
   });
 }
 
-export function formatTime(timestamp: string) {
+export function formatTime(timestamp: string | Date) {
   return new Date(timestamp).toLocaleTimeString("en-US", {
     timeZone: TIMEZONE,
     hour: "numeric",

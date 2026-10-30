@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
-import { db, type Ticket } from "@/lib/db";
+import { getDb, type Ticket } from "@/lib/db";
 import { addDays, formatDay, formatTime, isValidISODate, todayISO } from "@/lib/dates";
 import { deleteTicket } from "../../actions";
 
@@ -10,9 +10,11 @@ export default async function MyTicketsPage({ searchParams }: PageProps<"/my-tic
   const today = todayISO();
   const date = typeof dateParam === "string" && isValidISODate(dateParam) ? dateParam : today;
 
-  const tickets = db
-    .prepare("SELECT * FROM tickets WHERE user_id = ? AND work_date = ? ORDER BY created_at DESC")
-    .all(user.id, date) as Ticket[];
+  const sql = await getDb();
+  const tickets = await sql<Ticket[]>`
+    select * from ioms.tickets
+     where user_id = ${user.id} and work_date = ${date}::date
+     order by created_at desc`;
   const points = tickets.reduce((s, t) => s + t.points, 0);
   const completed = tickets.filter((t) => t.points > 0).length;
 

@@ -1,5 +1,5 @@
 import { requireManager } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { formatDay } from "@/lib/dates";
 import { heldDaysAwaitingReview } from "@/lib/stats";
 import { confirmDay, updateUser } from "./actions";
@@ -11,21 +11,21 @@ type UserRow = {
   display_name: string;
   role: "rep" | "manager";
   lane: string | null;
-  active: number;
+  active: boolean;
   tickets: number;
 };
 
 export default async function AdminPage() {
   const me = await requireManager();
-  const users = db
-    .prepare(
-      `SELECT u.id, u.username, u.display_name, u.role, u.lane, u.active,
-              (SELECT COUNT(*) FROM tickets t WHERE t.user_id = u.id) AS tickets
-         FROM users u
-        ORDER BY u.active DESC, u.role DESC, u.display_name`,
-    )
-    .all() as UserRow[];
-  const held = heldDaysAwaitingReview();
+  const sql = await getDb();
+  const [users, held] = await Promise.all([
+    sql<UserRow[]>`
+      select u.id, u.username, u.display_name, u.role, u.lane, u.active,
+             (select count(*) from ioms.tickets t where t.user_id = u.id)::int as tickets
+        from ioms.users u
+       order by u.active desc, u.role, u.display_name`,
+    heldDaysAwaitingReview(),
+  ]);
 
   return (
     <div className="space-y-8">

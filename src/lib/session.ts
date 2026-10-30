@@ -1,29 +1,22 @@
 import "server-only";
-import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
-import fs from "node:fs";
-import path from "node:path";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
-import { DATA_DIR } from "./db";
 
 export const SESSION_COOKIE = "tracker_session";
 const SESSION_DAYS = 14;
 
-// Use SESSION_SECRET if set; otherwise generate one and keep it in the data
-// folder so restarts don't sign everyone out.
-function loadSecret() {
-  if (process.env.SESSION_SECRET) return process.env.SESSION_SECRET;
-  const file = path.join(DATA_DIR, ".session-secret");
-  if (fs.existsSync(file)) return fs.readFileSync(file, "utf8").trim();
-  const secret = randomBytes(32).toString("hex");
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-  fs.writeFileSync(file, secret, { mode: 0o600 });
-  return secret;
+// Read lazily so a missing secret fails the request, not the build.
+function secret() {
+  const value = process.env.SESSION_SECRET;
+  if (value) return value;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("SESSION_SECRET is not set. Add a long random string (see README).");
+  }
+  return "dev-only-session-secret";
 }
 
-const secret = loadSecret();
-
 function sign(payload: string) {
-  return createHmac("sha256", secret).update(payload).digest("base64url");
+  return createHmac("sha256", secret()).update(payload).digest("base64url");
 }
 
 export async function createSession(userId: number) {

@@ -14,7 +14,7 @@ export default async function LeaderboardPage({ searchParams }: PageProps<"/lead
     typeof weekParam === "string" && isValidISODate(weekParam) ? weekStartOf(weekParam) : thisWeek;
   const isCurrent = week === thisWeek;
 
-  const standings = weeklyStandings(week);
+  const standings = await weeklyStandings(week);
   const active = standings.filter((s) => s.daysWorked > 0);
   const podium = active.slice(0, 3);
   const totals = {

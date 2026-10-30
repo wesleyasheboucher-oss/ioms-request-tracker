@@ -1,17 +1,17 @@
 import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
-import { db, type User } from "./db";
+import { getDb, type User } from "./db";
 import { readSession } from "./session";
 
 export const getCurrentUser = cache(async (): Promise<User | null> => {
   const uid = await readSession();
   if (uid === null) return null;
-  const user = db
-    .prepare(
-      "SELECT id, username, display_name, role, lane, active FROM users WHERE id = ? AND active = 1",
-    )
-    .get(uid) as User | undefined;
+  const sql = await getDb();
+  const [user] = await sql<User[]>`
+    select id, username, display_name, role, lane, active
+      from ioms.users
+     where id = ${uid} and active`;
   return user ?? null;
 });
 

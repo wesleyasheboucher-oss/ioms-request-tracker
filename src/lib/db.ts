@@ -1,10 +1,6 @@
 import "server-only";
-import { DatabaseSync } from "node:sqlite";
-import fs from "node:fs";
-import path from "node:path";
+import postgres from "postgres";
 import { hashPassword } from "./password";
-
-export const DATA_DIR = process.env.DATA_DIR ?? path.join(process.cwd(), "data");
 
 export type Role = "rep" | "manager";
 
@@ -14,7 +10,7 @@ export type User = {
   display_name: string;
   role: Role;
   lane: string | null;
-  active: number;
+  active: boolean;
 };
 
 export type Ticket = {
@@ -24,84 +20,122 @@ export type Ticket = {
   requested_by: string;
   source: string;
   request_type: string;
-  patient_contacted: number;
-  voicemail: number;
-  text_sent: number;
+  patient_contacted: boolean;
+  voicemail: boolean;
+  text_sent: boolean;
   outcome: string;
   notes: string | null;
   points: number;
   work_date: string;
-  created_at: string;
+  created_at: Date;
 };
 
+// Everything lives in its own "ioms" schema so it can't collide with other
+// tables in the Supabase project. Row level security is on with no policies,
+// so Supabase's public Data API can't read these tables; the app connects
+// directly as the database owner, which bypasses RLS.
 const SCHEMA = `
-CREATE TABLE IF NOT EXISTS users (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  username TEXT NOT NULL UNIQUE COLLATE NOCASE,
-  display_name TEXT NOT NULL,
-  password_hash TEXT NOT NULL,
-  role TEXT NOT NULL DEFAULT 'rep' CHECK (role IN ('rep', 'manager')),
-  lane TEXT,
-  active INTEGER NOT NULL DEFAULT 1,
-  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
-);
+create schema if not exists ioms;
 
-CREATE TABLE IF NOT EXISTS tickets (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id INTEGER NOT NULL REFERENCES users(id),
-  order_id TEXT NOT NULL,
-  requested_by TEXT NOT NULL,
-  source TEXT NOT NULL,
-  request_type TEXT NOT NULL,
-  patient_contacted INTEGER NOT NULL DEFAULT 0,
-  voicemail INTEGER NOT NULL DEFAULT 0,
-  text_sent INTEGER NOT NULL DEFAULT 0,
-  outcome TEXT NOT NULL,
-  notes TEXT,
-  points INTEGER NOT NULL,
-  work_date TEXT NOT NULL,
-  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+create table if not exists ioms.users (
+  id integer generated always as identity primary key,
+  username text not null,
+  display_name text not null,
+  password_hash text not null,
+  role text not null default 'rep' check (role in ('rep', 'manager')),
+  lane text,
+  active boolean not null default true,
+  created_at timestamptz not null default now()
 );
-CREATE INDEX IF NOT EXISTS tickets_user_date ON tickets (user_id, work_date);
-CREATE INDEX IF NOT EXISTS tickets_order ON tickets (order_id);
+create unique index if not exists users_username_key on ioms.users (lower(username));
+
+create table if not exists ioms.tickets (
+  id integer generated always as identity primary key,
+  user_id integer not null references ioms.users (id),
+  order_id text not null,
+  requested_by text not null,
+  source text not null,
+  request_type text not null,
+  patient_contacted boolean not null default false,
+  voicemail boolean not null default false,
+  text_sent boolean not null default false,
+  outcome text not null,
+  notes text,
+  points integer not null,
+  work_date date not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists tickets_user_date on ioms.tickets (user_id, work_date);
+create index if not exists tickets_work_date on ioms.tickets (work_date);
+create index if not exists tickets_order on ioms.tickets (order_id);
 
 -- Days at or above the held threshold that a manager has confirmed.
-CREATE TABLE IF NOT EXISTS confirmed_days (
-  user_id INTEGER NOT NULL REFERENCES users(id),
-  work_date TEXT NOT NULL,
-  confirmed_by INTEGER NOT NULL REFERENCES users(id),
-  confirmed_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-  PRIMARY KEY (user_id, work_date)
+create table if not exists ioms.confirmed_days (
+  user_id integer not null references ioms.users (id),
+  work_date date not null,
+  confirmed_by integer not null references ioms.users (id),
+  confirmed_at timestamptz not null default now(),
+  primary key (user_id, work_date)
 );
+
+alter table ioms.users enable row level security;
+alter table ioms.tickets enable row level security;
+alter table ioms.confirmed_days enable row level security;
 `;
 
-function open() {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-  const db = new DatabaseSync(path.join(DATA_DIR, "tracker.db"));
-  db.exec("PRAGMA busy_timeout = 5000; PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;");
-  db.exec(SCHEMA);
-  bootstrapAdmin(db);
-  return db;
+function connect() {
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    throw new Error("DATABASE_URL is not set. Add your Supabase connection string (see README).");
+  }
+  const local = /@(localhost|127\.0\.0\.1)[:/]/.test(url);
+  return postgres(url, {
+    ssl: local ? false : "require",
+    // Supabase's transaction pooler (port 6543) doesn't support prepared statements.
+    prepare: false,
+    max: 3,
+    idle_timeout: 20,
+    // Keep DATE columns as "YYYY-MM-DD" strings instead of JS Dates.
+    types: {
+      date: {
+        to: 1082,
+        from: [1082],
+        serialize: (x: string) => x,
+        parse: (x: string) => x,
+      },
+    },
+  });
 }
 
-// On first run there are no users, so create a manager account to log in with.
-function bootstrapAdmin(db: DatabaseSync) {
-  const { n } = db.prepare("SELECT COUNT(*) AS n FROM users").get() as { n: number };
-  if (n > 0) return;
+export type Sql = ReturnType<typeof connect>;
+
+// On first use, create the tables and, if there are no users yet, a manager
+// account to log in with.
+async function setup(sql: Sql) {
+  await sql.unsafe(SCHEMA);
   const username = process.env.ADMIN_USERNAME ?? "admin";
   const password = process.env.ADMIN_PASSWORD ?? "changeme";
-  // OR IGNORE: several processes (e.g. build workers) may race to do this.
-  const { changes } = db
-    .prepare(
-      "INSERT OR IGNORE INTO users (username, display_name, password_hash, role) VALUES (?, ?, ?, 'manager')",
-    )
-    .run(username, "Manager", hashPassword(password));
-  if (changes) console.log(
-    `[tracker] Created first manager account "${username}". Log in and change the password.`,
-  );
+  const created = await sql`
+    insert into ioms.users (username, display_name, password_hash, role)
+    select ${username}, 'Manager', ${hashPassword(password)}, 'manager'
+    where not exists (select 1 from ioms.users)
+    on conflict do nothing
+    returning id`;
+  if (created.length) {
+    console.log(
+      `[tracker] Created first manager account "${username}". Log in and change the password.`,
+    );
+  }
 }
 
-const globalForDb = globalThis as unknown as { trackerDb?: DatabaseSync };
+const globalForDb = globalThis as unknown as { trackerSql?: Sql; trackerReady?: Promise<void> };
 
-export const db = globalForDb.trackerDb ?? open();
-if (process.env.NODE_ENV !== "production") globalForDb.trackerDb = db;
+export async function getDb() {
+  const sql = (globalForDb.trackerSql ??= connect());
+  globalForDb.trackerReady ??= setup(sql).catch((e) => {
+    globalForDb.trackerReady = undefined;
+    throw e;
+  });
+  await globalForDb.trackerReady;
+  return sql;
+}

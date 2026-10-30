@@ -1,5 +1,5 @@
 import "server-only";
-import { db } from "./db";
+import { getDb, type Sql } from "./db";
 import { addDays, todayISO, weekStartOf } from "./dates";
 import { HELD_DAY_POINTS, MIN_DAYS_TO_QUALIFY } from "./config";
 import { nextTierFor, tierFor } from "./scoring";
@@ -26,34 +26,30 @@ type DayRow = {
   logged: number;
   completed: number;
   points: number;
-  confirmed: number;
+  confirmed: boolean;
 };
+
+type RepRow = { id: number; display_name: string; lane: string | null };
 
 // Per-rep, per-day totals for Monday–Friday of the given week. A day counts as
 // "worked" when the rep logged at least one request that day.
-function dailyTotals(weekStart: string, userId?: number) {
+function dailyTotals(sql: Sql, weekStart: string, userId?: number) {
   const friday = addDays(weekStart, 4);
-  return db
-    .prepare(
-      `SELECT t.user_id, t.work_date,
-              COUNT(*) AS logged,
-              SUM(t.points > 0) AS completed,
-              SUM(t.points) AS points,
-              (cd.user_id IS NOT NULL) AS confirmed
-         FROM tickets t
-         LEFT JOIN confirmed_days cd
-           ON cd.user_id = t.user_id AND cd.work_date = t.work_date
-        WHERE t.work_date BETWEEN ? AND ?
-          ${userId !== undefined ? "AND t.user_id = ?" : ""}
-        GROUP BY t.user_id, t.work_date`,
-    )
-    .all(...[weekStart, friday, ...(userId !== undefined ? [userId] : [])]) as DayRow[];
+  return sql<DayRow[]>`
+    select t.user_id, t.work_date,
+           count(*)::int as logged,
+           (count(*) filter (where t.points > 0))::int as completed,
+           sum(t.points)::int as points,
+           bool_or(cd.user_id is not null) as confirmed
+      from ioms.tickets t
+      left join ioms.confirmed_days cd
+        on cd.user_id = t.user_id and cd.work_date = t.work_date
+     where t.work_date between ${weekStart}::date and ${friday}::date
+       ${userId !== undefined ? sql`and t.user_id = ${userId}` : sql``}
+     group by t.user_id, t.work_date`;
 }
 
-function buildStanding(
-  user: { id: number; display_name: string; lane: string | null },
-  days: DayRow[],
-): Standing {
+function buildStanding(user: RepRow, days: DayRow[]): Standing {
   const points = days.reduce((s, d) => s + d.points, 0);
   const daysWorked = days.length;
   const ptsPerDay = daysWorked ? Math.round((points / daysWorked) * 10) / 10 : 0;
@@ -79,21 +75,24 @@ function buildStanding(
   };
 }
 
-export function weeklyStandings(weekStart: string): Standing[] {
-  const reps = db
-    .prepare(
-      "SELECT id, display_name, lane FROM users WHERE role = 'rep' AND active = 1 ORDER BY display_name",
-    )
-    .all() as { id: number; display_name: string; lane: string | null }[];
-  const rows = dailyTotals(weekStart);
+export async function weeklyStandings(weekStart: string): Promise<Standing[]> {
+  const sql = await getDb();
+  const [reps, rows] = await Promise.all([
+    sql<RepRow[]>`
+      select id, display_name, lane from ioms.users
+       where role = 'rep' and active
+       order by display_name`,
+    dailyTotals(sql, weekStart),
+  ]);
   return reps
     .map((u) => buildStanding(u, rows.filter((r) => r.user_id === u.id)))
     .sort((a, b) => b.ptsPerDay - a.ptsPerDay || b.completed - a.completed);
 }
 
-export function myWeek(user: { id: number; display_name: string; lane: string | null }) {
+export async function myWeek(user: RepRow) {
+  const sql = await getDb();
   const today = todayISO();
-  const rows = dailyTotals(weekStartOf(today), user.id);
+  const rows = await dailyTotals(sql, weekStartOf(today), user.id);
   const todayRow = rows.find((r) => r.work_date === today);
   return {
     week: buildStanding(user, rows),
@@ -106,23 +105,19 @@ export function myWeek(user: { id: number; display_name: string; lane: string | 
 }
 
 // Days at or above the held threshold that still need a manager to confirm.
-export function heldDaysAwaitingReview() {
-  return db
-    .prepare(
-      `SELECT t.user_id, u.display_name, t.work_date, SUM(t.points) AS points, COUNT(*) AS logged
-         FROM tickets t
-         JOIN users u ON u.id = t.user_id
-         LEFT JOIN confirmed_days cd ON cd.user_id = t.user_id AND cd.work_date = t.work_date
-        WHERE cd.user_id IS NULL
-        GROUP BY t.user_id, t.work_date
-       HAVING SUM(t.points) >= ?
-        ORDER BY t.work_date DESC`,
-    )
-    .all(HELD_DAY_POINTS) as {
-    user_id: number;
-    display_name: string;
-    work_date: string;
-    points: number;
-    logged: number;
-  }[];
+export async function heldDaysAwaitingReview() {
+  const sql = await getDb();
+  return sql<
+    { user_id: number; display_name: string; work_date: string; points: number; logged: number }[]
+  >`
+    select t.user_id, u.display_name, t.work_date,
+           sum(t.points)::int as points, count(*)::int as logged
+      from ioms.tickets t
+      join ioms.users u on u.id = t.user_id
+      left join ioms.confirmed_days cd
+        on cd.user_id = t.user_id and cd.work_date = t.work_date
+     where cd.user_id is null
+     group by t.user_id, u.display_name, t.work_date
+    having sum(t.points) >= ${HELD_DAY_POINTS}
+     order by t.work_date desc`;
 }
