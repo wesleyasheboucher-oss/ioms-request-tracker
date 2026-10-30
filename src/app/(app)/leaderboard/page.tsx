@@ -1,8 +1,13 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { addDays, formatDay, isValidISODate, todayISO, weekStartOf } from "@/lib/dates";
-import { weeklyStandings, type Standing } from "@/lib/stats";
-import { MIN_DAYS_TO_QUALIFY, POINTS_PER_COMPLETED_REQUEST, TIERS } from "@/lib/config";
+import { weekRules, weeklyStandings, type Standing } from "@/lib/stats";
+import {
+  MIN_DAYS_TO_QUALIFY,
+  NEW_SCORING_START,
+  POINTS_PER_COMPLETED_REQUEST,
+  TIERS,
+} from "@/lib/config";
 import { TierBadge, TierMeter } from "@/components/tier-meter";
 import { Pumpkin, Skeleton } from "@/components/spooky";
 import { AutoRefresh } from "./auto-refresh";
@@ -16,11 +21,12 @@ export default async function LeaderboardPage({ searchParams }: PageProps<"/lead
   const isCurrent = week === thisWeek;
 
   const standings = await weeklyStandings(week);
+  const rules = weekRules(week);
   const active = standings.filter((s) => s.daysWorked > 0);
   const podium = active.slice(0, 3);
   const totals = {
     completed: standings.reduce((s, r) => s + r.completed, 0),
-    points: standings.reduce((s, r) => s + r.points, 0),
+    points: Math.round(standings.reduce((s, r) => s + r.points, 0) * 10) / 10,
     onTier: standings.filter((r) => r.tier).length,
     prizes: standings.reduce((s, r) => s + r.prize, 0),
   };
@@ -38,6 +44,7 @@ export default async function LeaderboardPage({ searchParams }: PageProps<"/lead
             Week of {formatDay(week)} – {formatDay(addDays(week, 4), { year: "numeric" })}
             {isCurrent && " · updates every minute"}
           </p>
+          <WeekNote rules={rules} />
         </div>
         <div className="flex items-center gap-2">
           <Link href={`/leaderboard?week=${addDays(week, -7)}`} className="btn-ghost px-3">
@@ -135,7 +142,7 @@ export default async function LeaderboardPage({ searchParams }: PageProps<"/lead
                   <TierBadge name={s.tier?.name ?? null} />
                 </td>
                 <td className="px-4 py-3">
-                  <Status s={s} />
+                  <Status s={s} minDays={rules.minDays} />
                 </td>
                 <td className="px-4 py-3 text-right font-semibold tabular-nums">
                   {s.prize ? `$${s.prize}` : <span className="text-muted">—</span>}
@@ -154,7 +161,8 @@ export default async function LeaderboardPage({ searchParams }: PageProps<"/lead
             patient (or left both a voicemail and a text) and it ended as{" "}
             <i>Resolved – patient confirmed</i> or <i>Resolved – warm transfer to collector</i>. Score is points ÷
             days worked. You need {MIN_DAYS_TO_QUALIFY}+ days to qualify. Days of 300+ pts are held until a
-            manager confirms them.
+            manager confirms them. Days before {formatDay(NEW_SCORING_START)} keep the points they earned under the
+            old rules.
           </p>
         </div>
         <ul className="grid gap-2 sm:grid-cols-3">
@@ -218,7 +226,7 @@ function PodiumCard({ s, place, isMe }: { s: Standing; place: 1 | 2 | 3; isMe: b
   );
 }
 
-function Status({ s }: { s: Standing }) {
+function Status({ s, minDays }: { s: Standing; minDays: number }) {
   if (s.daysWorked === 0) return <span className="text-xs text-muted">No days logged</span>;
   if (s.heldDays.length > 0) {
     return (
@@ -228,7 +236,7 @@ function Status({ s }: { s: Standing }) {
     );
   }
   if (!s.qualified) {
-    const need = MIN_DAYS_TO_QUALIFY - s.daysWorked;
+    const need = minDays - s.daysWorked;
     return (
       <span className="text-xs text-muted">
         {need} more {need === 1 ? "day" : "days"} to qualify
@@ -255,5 +263,18 @@ function Avatar({ name, size = "sm" }: { name: string; size?: "sm" | "lg" }) {
     >
       {initials}
     </span>
+  );
+}
+
+function WeekNote({ rules }: { rules: ReturnType<typeof weekRules> }) {
+  const notes = [
+    !rules.paysPrizes && "History week: scores show, no prizes.",
+    rules.startsMidWeek &&
+      `New scoring started ${formatDay(rules.from, { weekday: "short" })}. Only ${formatDay(rules.from)} on counts this week; ${rules.minDays} days to qualify.`,
+    rules.holiday && !rules.startsMidWeek && `Holiday week: ${rules.minDays} days to qualify.`,
+  ].filter(Boolean);
+  if (!notes.length) return null;
+  return (
+    <p className="mt-2 inline-block rounded-lg bg-warn-soft px-2.5 py-1 text-xs text-warn">{notes.join(" ")}</p>
   );
 }

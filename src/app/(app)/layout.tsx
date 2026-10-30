@@ -13,6 +13,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
     ...(user.role === "manager"
       ? [
           { href: "/admin/tickets", label: "All tickets" },
+          { href: "/admin/import", label: "Import" },
           { href: "/admin", label: "Admin" },
         ]
       : []),

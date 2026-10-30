@@ -69,12 +69,12 @@ export default async function MyTicketsPage({ searchParams }: PageProps<"/my-tic
             )}
             {tickets.map((t) => (
               <tr key={t.id} className="align-top">
-                <td className="px-4 py-3 whitespace-nowrap text-muted">{formatTime(t.created_at)}</td>
-                <td className="px-4 py-3 font-mono whitespace-nowrap">{t.order_id}</td>
-                <td className="px-4 py-3">{t.requested_by}</td>
-                <td className="px-4 py-3">{t.source}</td>
+                <td className="px-4 py-3 whitespace-nowrap text-muted">{t.origin === "import" ? "Imported" : formatTime(t.created_at)}</td>
+                <td className="px-4 py-3 font-mono whitespace-nowrap">{t.order_id ?? "—"}</td>
+                <td className="px-4 py-3">{t.requested_by ?? "—"}</td>
+                <td className="px-4 py-3">{t.source ?? "—"}</td>
                 <td className="px-4 py-3">
-                  {t.request_type}
+                  {t.request_type ?? "—"}
                   {t.notes && <p className="mt-0.5 max-w-xs text-xs text-muted">{t.notes}</p>}
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap">
@@ -82,12 +82,12 @@ export default async function MyTicketsPage({ searchParams }: PageProps<"/my-tic
                     .filter(Boolean)
                     .join(" + ") || <span className="text-muted">None</span>}
                 </td>
-                <td className="px-4 py-3">{t.outcome}</td>
+                <td className="px-4 py-3">{t.outcome ?? t.import_status ?? "—"}</td>
                 <td className={`px-4 py-3 text-right font-semibold ${t.points ? "text-good" : "text-muted"}`}>
                   {t.points}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  {(t.work_date === today || user.role === "manager") && (
+                  {((t.work_date === today && t.origin === "app") || user.role === "manager") && (
                     <form action={deleteTicket}>
                       <input type="hidden" name="id" value={t.id} />
                       <button className="text-xs text-muted hover:text-bad" title="Remove this entry">

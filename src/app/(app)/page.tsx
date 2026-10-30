@@ -82,9 +82,9 @@ export default async function LogTicketPage() {
               {recent.map((t) => (
                 <li key={t.id} className="flex items-center justify-between gap-2 py-2">
                   <span className="min-w-0">
-                    <span className="block font-mono">{t.order_id}</span>
+                    <span className="block font-mono">{t.order_id ?? "—"}</span>
                     <span className="block truncate text-xs text-muted">
-                      {formatTime(t.created_at)} · {t.request_type}
+                      {t.origin === "import" ? "Imported" : formatTime(t.created_at)} · {t.request_type ?? "—"}
                     </span>
                   </span>
                   <span className={`text-sm font-semibold ${t.points ? "text-good" : "text-muted"}`}>

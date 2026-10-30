@@ -102,8 +102,13 @@ export async function lookupOrder(orderId: string): Promise<PriorLog[]> {
   if (!user || !orderId.trim()) return [];
   const sql = await getDb();
   const rows = await sql<PriorLog[]>`
-    select t.work_date, u.display_name, t.request_type, t.outcome, t.points
-      from ioms.tickets t join ioms.users u on u.id = t.user_id
+    select t.work_date,
+           coalesce(u.display_name, 'Unassigned') ||
+             case when t.origin = 'import' then ' (imported)' else '' end as display_name,
+           coalesce(t.request_type, '—') as request_type,
+           coalesce(t.outcome, t.import_status, '—') as outcome,
+           t.points
+      from ioms.tickets t left join ioms.users u on u.id = t.user_id
      where t.order_id = ${orderId.trim()} and t.work_date >= ${addDays(todayISO(), -30)}::date
      order by t.created_at desc
      limit 5`;

@@ -13,17 +13,21 @@ export type User = {
   active: boolean;
 };
 
+// Tickets logged through the app have every field. Imported iOMS requests
+// (origin "import") may be missing any of them, including the rep.
 export type Ticket = {
   id: number;
-  user_id: number;
-  order_id: string;
-  requested_by: string;
-  source: string;
-  request_type: string;
+  user_id: number | null;
+  origin: "app" | "import";
+  order_id: string | null;
+  requested_by: string | null;
+  source: string | null;
+  request_type: string | null;
   patient_contacted: boolean;
   voicemail: boolean;
   text_sent: boolean;
-  outcome: string;
+  outcome: string | null;
+  import_status: string | null;
   notes: string | null;
   points: number;
   work_date: string;
@@ -78,9 +82,47 @@ create table if not exists ioms.confirmed_days (
   primary key (user_id, work_date)
 );
 
+-- Imported iOMS requests live in tickets too, with whatever fields the
+-- export had. import_key de-duplicates re-uploads of the same rows.
+create table if not exists ioms.imports (
+  id integer generated always as identity primary key,
+  filename text not null,
+  imported_by integer not null references ioms.users (id),
+  rows_imported integer not null default 0,
+  created_at timestamptz not null default now()
+);
+alter table ioms.tickets alter column user_id drop not null;
+alter table ioms.tickets alter column order_id drop not null;
+alter table ioms.tickets alter column requested_by drop not null;
+alter table ioms.tickets alter column source drop not null;
+alter table ioms.tickets alter column request_type drop not null;
+alter table ioms.tickets alter column outcome drop not null;
+alter table ioms.tickets add column if not exists origin text not null default 'app';
+alter table ioms.tickets add column if not exists import_id integer references ioms.imports (id) on delete cascade;
+alter table ioms.tickets add column if not exists import_key text;
+alter table ioms.tickets add column if not exists import_status text;
+create unique index if not exists tickets_import_key on ioms.tickets (import_key) where import_key is not null;
+
+-- Daily totals carried over from the Scream Team spreadsheet, scored under
+-- the rules in force on each date. day_weight: 1 = worked, 0.5 = half-day
+-- PTO, 0 = training / PTO / no work.
+create table if not exists ioms.history_days (
+  user_id integer not null references ioms.users (id),
+  work_date date not null,
+  completed integer not null default 0,
+  points numeric(8, 1) not null default 0,
+  day_weight numeric(2, 1) not null default 1,
+  held boolean not null default false,
+  breakdown jsonb not null default '{}',
+  notes text,
+  primary key (user_id, work_date)
+);
+
 alter table ioms.users enable row level security;
 alter table ioms.tickets enable row level security;
 alter table ioms.confirmed_days enable row level security;
+alter table ioms.imports enable row level security;
+alter table ioms.history_days enable row level security;
 `;
 
 function connect() {

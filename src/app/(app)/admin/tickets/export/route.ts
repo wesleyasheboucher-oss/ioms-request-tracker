@@ -12,12 +12,22 @@ export async function GET(request: Request) {
   const tickets = await findTickets(filters, 100_000);
 
   const header = [
-    "Date", "Time", "Person", "Order ID", "Requested by", "Source", "Request type",
+    "Date", "Time", "Type", "Person", "Order ID", "Requested by", "Source", "Request type",
     "Contact", "Outcome", "Points", "Notes",
   ];
   const rows = tickets.map((t) => [
-    t.work_date, formatTime(t.created_at), t.display_name, t.order_id, t.requested_by, t.source,
-    t.request_type, contactLabel(t), t.outcome, String(t.points), t.notes ?? "",
+    t.work_date,
+    t.origin === "import" ? "" : formatTime(t.created_at),
+    t.origin === "import" ? "Imported" : "Logged",
+    t.display_name ?? "Unassigned",
+    t.order_id ?? "",
+    t.requested_by ?? "",
+    t.source ?? "",
+    t.request_type ?? "",
+    contactLabel(t),
+    t.outcome ?? t.import_status ?? "",
+    String(t.points),
+    t.notes ?? "",
   ]);
   const csv = [header, ...rows].map((r) => r.map(csvCell).join(",")).join("\r\n");
 

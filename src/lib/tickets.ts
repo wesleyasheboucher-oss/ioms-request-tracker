@@ -5,8 +5,10 @@ import { isValidISODate, todayISO, weekStartOf } from "./dates";
 export type TicketFilters = {
   from: string;
   to: string;
-  rep: number | null;
+  // A user id, "unassigned" for imported rows with no rep, or null for everyone.
+  rep: number | "unassigned" | null;
   status: "all" | "scored" | "unscored";
+  origin: "all" | "app" | "import";
   q: string;
 };
 
@@ -14,15 +16,17 @@ export type TicketRow = {
   id: number;
   work_date: string;
   created_at: Date;
-  display_name: string;
-  order_id: string;
-  requested_by: string;
-  source: string;
-  request_type: string;
+  display_name: string | null;
+  origin: "app" | "import";
+  import_status: string | null;
+  order_id: string | null;
+  requested_by: string | null;
+  source: string | null;
+  request_type: string | null;
   patient_contacted: boolean;
   voicemail: boolean;
   text_sent: boolean;
-  outcome: string;
+  outcome: string | null;
   notes: string | null;
   points: number;
 };
@@ -37,11 +41,13 @@ export function parseTicketFilters(params: Record<string, string | string[] | un
   const to = isValidISODate(get("to")) ? get("to")! : today;
   const rep = Number(get("rep"));
   const status = get("status");
+  const origin = get("origin");
   return {
     from: from <= to ? from : to,
     to,
-    rep: Number.isInteger(rep) && rep > 0 ? rep : null,
+    rep: get("rep") === "unassigned" ? "unassigned" : Number.isInteger(rep) && rep > 0 ? rep : null,
     status: status === "scored" || status === "unscored" ? status : "all",
+    origin: origin === "app" || origin === "import" ? origin : "all",
     q: (get("q") ?? "").trim().slice(0, 40),
   };
 }
@@ -49,17 +55,19 @@ export function parseTicketFilters(params: Record<string, string | string[] | un
 export async function findTickets(f: TicketFilters, limit = TICKET_LIMIT) {
   const sql = await getDb();
   return sql<TicketRow[]>`
-    select t.id, t.work_date, t.created_at, u.display_name, t.order_id, t.requested_by,
+    select t.id, t.work_date, t.created_at, u.display_name, t.origin, t.import_status,
+           t.order_id, t.requested_by,
            t.source, t.request_type, t.patient_contacted, t.voicemail, t.text_sent,
            t.outcome, t.notes, t.points
       from ioms.tickets t
-      join ioms.users u on u.id = t.user_id
+      left join ioms.users u on u.id = t.user_id
      where t.work_date between ${f.from}::date and ${f.to}::date
-       ${f.rep ? sql`and t.user_id = ${f.rep}` : sql``}
+       ${f.rep === "unassigned" ? sql`and t.user_id is null` : f.rep ? sql`and t.user_id = ${f.rep}` : sql``}
+       ${f.origin !== "all" ? sql`and t.origin = ${f.origin}` : sql``}
        ${f.status === "scored" ? sql`and t.points > 0` : sql``}
        ${f.status === "unscored" ? sql`and t.points = 0` : sql``}
        ${f.q ? sql`and t.order_id ilike ${"%" + f.q.replace(/[\\%_]/g, "\\$&") + "%"}` : sql``}
-     order by t.created_at desc
+     order by t.work_date desc, t.created_at desc
      limit ${limit}`;
 }
 

@@ -21,6 +21,7 @@ export default async function AllTicketsPage({ searchParams }: PageProps<"/admin
     from: filters.from,
     to: filters.to,
     status: filters.status,
+    origin: filters.origin,
     ...(filters.rep ? { rep: String(filters.rep) } : {}),
     ...(filters.q ? { q: filters.q } : {}),
   });
@@ -37,7 +38,7 @@ export default async function AllTicketsPage({ searchParams }: PageProps<"/admin
         </a>
       </div>
 
-      <form className="card grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-[repeat(5,minmax(0,1fr))_auto] lg:items-end">
+      <form className="card grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-[repeat(6,minmax(0,1fr))_auto] lg:items-end">
         <div>
           <label className="label" htmlFor="from">From</label>
           <input id="from" name="from" type="date" defaultValue={filters.from} className="input py-2" />
@@ -50,6 +51,7 @@ export default async function AllTicketsPage({ searchParams }: PageProps<"/admin
           <label className="label" htmlFor="rep">Person</label>
           <select id="rep" name="rep" defaultValue={filters.rep ?? ""} className="input py-2">
             <option value="">Everyone</option>
+            <option value="unassigned">Unassigned (imported)</option>
             {people.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.display_name}
@@ -64,6 +66,14 @@ export default async function AllTicketsPage({ searchParams }: PageProps<"/admin
             <option value="all">All tickets</option>
             <option value="scored">Scored (completed)</option>
             <option value="unscored">Not scored</option>
+          </select>
+        </div>
+        <div>
+          <label className="label" htmlFor="origin">Type</label>
+          <select id="origin" name="origin" defaultValue={filters.origin} className="input py-2">
+            <option value="all">Logged + imported</option>
+            <option value="app">Logged here</option>
+            <option value="import">Imported iOMS requests</option>
           </select>
         </div>
         <div>
@@ -110,20 +120,28 @@ export default async function AllTicketsPage({ searchParams }: PageProps<"/admin
               <tr key={t.id} className="align-top">
                 <td className="px-4 py-3 whitespace-nowrap">
                   {formatDay(t.work_date, { weekday: "short" })}
-                  <span className="block text-xs text-muted">{formatTime(t.created_at)}</span>
+                  {t.origin === "import" ? (
+                    <span className="mt-0.5 block w-fit rounded bg-haunt/20 px-1.5 text-[10px] font-semibold text-haunt">
+                      Imported
+                    </span>
+                  ) : (
+                    <span className="block text-xs text-muted">{formatTime(t.created_at)}</span>
+                  )}
                 </td>
-                <td className="px-4 py-3 font-medium">{t.display_name}</td>
-                <td className="px-4 py-3 font-mono whitespace-nowrap">{t.order_id}</td>
-                <td className="px-4 py-3">{t.requested_by}</td>
-                <td className="px-4 py-3">{t.source}</td>
+                <td className="px-4 py-3 font-medium">
+                  {t.display_name ?? <span className="text-muted">Unassigned</span>}
+                </td>
+                <td className="px-4 py-3 font-mono whitespace-nowrap">{t.order_id ?? "—"}</td>
+                <td className="px-4 py-3">{t.requested_by ?? "—"}</td>
+                <td className="px-4 py-3">{t.source ?? "—"}</td>
                 <td className="px-4 py-3">
-                  {t.request_type}
+                  {t.request_type ?? "—"}
                   {t.notes && <p className="mt-0.5 max-w-xs text-xs text-muted">{t.notes}</p>}
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap">
                   {contactLabel(t) || <span className="text-muted">None</span>}
                 </td>
-                <td className="px-4 py-3">{t.outcome}</td>
+                <td className="px-4 py-3">{t.outcome ?? t.import_status ?? "—"}</td>
                 <td className={`px-4 py-3 text-right font-semibold ${t.points ? "text-good" : "text-muted"}`}>
                   {t.points}
                 </td>
