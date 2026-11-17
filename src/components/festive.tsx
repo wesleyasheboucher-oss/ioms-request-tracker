@@ -106,6 +106,71 @@ export function Snowflake({ className, style }: SvgProps) {
   );
 }
 
+export function Elf({ className, style }: SvgProps) {
+  return (
+    <svg viewBox="0 0 40 70" className={className} style={style} aria-hidden>
+      <path d="M13 20Q20 -2 34 4l-3 4Q24 8 27 20z" fill="#1f9a4f" />
+      <circle cx="33" cy="6" r="3" fill="var(--gold)" />
+      <path d="M8 20q12-5 24 0l-1 3H9z" fill="var(--snow)" />
+      <path d="M8 26l-5-4 6 8zM32 26l5-4-6 8z" fill="#f2c4a0" />
+      <circle cx="20" cy="28" r="9" fill="#f6d0b0" />
+      <circle cx="16.5" cy="27" r="1.3" fill="#1a1d24" />
+      <circle cx="23.5" cy="27" r="1.3" fill="#1a1d24" />
+      <circle cx="14" cy="31" r="1.8" fill="#ff8f8f" opacity=".6" />
+      <circle cx="26" cy="31" r="1.8" fill="#ff8f8f" opacity=".6" />
+      <path d="M17 31.5q3 2.5 6 0" stroke="#1a1d24" strokeWidth="1" fill="none" strokeLinecap="round" />
+      <path d="M11 38h18l3 16H8z" fill="#1f9a4f" />
+      <path d="M11 38l9 6 9-6" fill="var(--accent)" />
+      <rect x="9" y="48" width="22" height="3" fill="#3a2414" />
+      <rect x="18" y="48" width="4" height="3" fill="var(--gold)" />
+      <path d="M11 54h6v8h-6zM23 54h6v8h-6z" fill="var(--snow)" />
+      <path d="M11 56h6M11 60h6M23 56h6M23 60h6" stroke="var(--accent)" strokeWidth="1.6" />
+      <path d="M10 62h8q0 4-5 4-5 0-6-3zM22 62h8q3 1 4-2 1 5-6 5h-6z" fill="#1f7a45" />
+    </svg>
+  );
+}
+
+// Head and shoulders, for peeking around the edge of the screen.
+export function Santa({ className, style }: SvgProps) {
+  return (
+    <svg viewBox="0 0 80 96" className={className} style={style} aria-hidden>
+      <path d="M8 96q2-20 32-20t32 20z" fill="var(--accent)" />
+      <path d="M18 34Q30 2 62 8q10 4 8 18L58 22q-6-6-10 0z" fill="var(--accent)" />
+      <circle cx="68" cy="28" r="6" fill="var(--snow)" />
+      <circle cx="40" cy="44" r="17" fill="#f6d0b0" />
+      <path d="M20 46q-2 30 20 34 22-4 20-34-4 14-20 14t-20-14z" fill="var(--snow)" />
+      <path d="M28 55q6-6 12-1 6-5 12 1-6 4-12 0-6 4-12 0z" fill="#e8ecef" />
+      <circle cx="40" cy="51" r="3.4" fill="#ff9a8a" />
+      <circle cx="33" cy="43" r="1.9" fill="#1a1d24" />
+      <circle cx="47" cy="43" r="1.9" fill="#1a1d24" />
+      <path d="M29 38q4-3 8 0M43 38q4-3 8 0" stroke="var(--snow)" strokeWidth="2.4" fill="none" strokeLinecap="round" />
+      <circle cx="28" cy="49" r="3" fill="#ff8f8f" opacity=".55" />
+      <circle cx="52" cy="49" r="3" fill="#ff8f8f" opacity=".55" />
+      <rect x="16" y="28" width="48" height="10" rx="5" fill="var(--snow)" />
+    </svg>
+  );
+}
+
+// A grumpy green holiday grump, for peeking around the edge of the screen.
+export function Grump({ className, style }: SvgProps) {
+  return (
+    <svg viewBox="0 0 80 96" className={className} style={style} aria-hidden>
+      <path d="M10 96q2-20 30-20t30 20z" fill="#5f8f2a" />
+      <path d="M18 36q-4-14 6-20M62 36q4-14-6-20" stroke="#7fb03a" strokeWidth="5" strokeLinecap="round" />
+      <ellipse cx="40" cy="50" rx="21" ry="24" fill="#8cc63f" />
+      <path d="M22 34q6-10 18-8 12-2 18 8-8-4-18-3-10-1-18 3z" fill="#6c9e2c" />
+      <path d="M26 41l11 3M54 41l-11 3" stroke="#3d5a17" strokeWidth="2.6" strokeLinecap="round" />
+      <ellipse cx="32" cy="47" rx="4.2" ry="3" fill="#f2e35a" />
+      <ellipse cx="48" cy="47" rx="4.2" ry="3" fill="#f2e35a" />
+      <circle cx="33" cy="47" r="1.6" fill="#b3261e" />
+      <circle cx="49" cy="47" r="1.6" fill="#b3261e" />
+      <ellipse cx="40" cy="54" rx="2.6" ry="2" fill="#5e8a26" />
+      <path d="M27 60q9 9 26-4" stroke="#3d5a17" strokeWidth="2.4" fill="none" strokeLinecap="round" />
+      <path d="M50 56l3-1 0 3" stroke="#3d5a17" strokeWidth="2" fill="none" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 const BULB_COLORS = ["var(--accent)", "var(--gold)", "#3ccf6e", "var(--frost)"];
 
 // A strand of twinkling lights hung along the bottom edge of the header.
@@ -138,8 +203,8 @@ const FLAKES = Array.from({ length: 36 }, (_, i) => ({
   opacity: 0.35 + ((i * 11) % 5) / 10,
 }));
 
-// Fixed layer behind the page: falling snow, a few drifting snowflakes and
-// a snowy hill with trees at the bottom.
+// Fixed layer behind the page: falling snow, a few drifting snowflakes, and
+// a snowy hill with trees and elves at the bottom.
 export function FestiveBackdrop() {
   return (
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
@@ -182,6 +247,11 @@ export function FestiveBackdrop() {
       <Tree className="absolute bottom-1 -left-1 w-16 opacity-90 sm:w-24" />
       <Tree className="absolute bottom-1 left-14 hidden w-12 opacity-70 sm:block" />
       <Tree className="absolute right-3 bottom-1 hidden w-14 opacity-80 sm:block" />
+      <Elf className="anim-hop absolute bottom-2 left-24 hidden w-6 sm:block sm:left-28" />
+      <Elf className="anim-hop absolute right-20 bottom-2 hidden w-6 -scale-x-100 sm:block" style={{ animationDelay: "-0.9s" }} />
+      <div className="anim-elf-walk absolute bottom-3 left-0">
+        <Elf className="anim-step w-5 sm:w-6" />
+      </div>
     </div>
   );
 }

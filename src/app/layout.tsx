@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Mountains_of_Christmas } from "next/font/google";
 import { FestiveBackdrop } from "@/components/festive";
+import { Peeker } from "@/components/peeker";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -34,6 +35,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <FestiveBackdrop />
         <div className="relative z-10 flex flex-1 flex-col">{children}</div>
+        <Peeker />
       </body>
     </html>
   );

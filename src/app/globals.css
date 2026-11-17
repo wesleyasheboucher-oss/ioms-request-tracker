@@ -123,6 +123,20 @@ body {
   15% { opacity: 1; }
   100% { translate: 0 -150px; opacity: 0; rotate: 25deg; }
 }
+@keyframes hop {
+  0%, 70%, 100% { translate: 0 0; }
+  80% { translate: 0 -6px; }
+  90% { translate: 0 0; }
+}
+@keyframes step {
+  0%, 100% { translate: 0 0; rotate: -4deg; }
+  50% { translate: 0 -2px; rotate: 4deg; }
+}
+/* Crosses the hill, then waits offscreen before the next trip. */
+@keyframes elf-walk {
+  0% { transform: translateX(-8vw); }
+  55%, 100% { transform: translateX(108vw); }
+}
 @keyframes slide-in {
   from { opacity: 0; translate: 0 8px; }
   to { opacity: 1; translate: 0 0; }
@@ -140,6 +154,9 @@ body {
 .anim-glow { animation: glow 3s ease-in-out infinite; }
 .anim-pop { animation: pop 0.6s cubic-bezier(0.3, 1.4, 0.5, 1) both; }
 .anim-rise { animation: rise 2.2s ease-out both; }
+.anim-hop { animation: hop 2.6s ease-in-out infinite; }
+.anim-step { animation: step 0.5s ease-in-out infinite; }
+.anim-elf-walk { animation: elf-walk 70s linear infinite; animation-delay: -20s; }
 .anim-slide-in { animation: slide-in 0.25s ease-out both; }
 
 /* Candy-cane stripes for a meter that has reached a tier. */
@@ -159,5 +176,5 @@ body {
     animation: none !important;
     transition: none !important;
   }
-  .anim-snow { display: none; }
+  .anim-snow, .anim-elf-walk { display: none; }
 }
