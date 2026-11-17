@@ -30,7 +30,7 @@ export default async function AllTicketsPage({ searchParams }: PageProps<"/admin
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-spooky text-4xl tracking-wide">All tickets</h1>
+          <h1 className="font-festive text-4xl tracking-wide">All tickets</h1>
           <p className="text-sm text-muted">Every ticket logged by the team.</p>
         </div>
         <a href={`/admin/tickets/export?${exportQuery}`} className="btn-ghost">
@@ -121,7 +121,7 @@ export default async function AllTicketsPage({ searchParams }: PageProps<"/admin
                 <td className="px-4 py-3 whitespace-nowrap">
                   {formatDay(t.work_date, { weekday: "short" })}
                   {t.origin === "import" ? (
-                    <span className="mt-0.5 block w-fit rounded bg-haunt/20 px-1.5 text-[10px] font-semibold text-haunt">
+                    <span className="mt-0.5 block w-fit rounded bg-frost/15 px-1.5 text-[10px] font-semibold text-frost">
                       Imported
                     </span>
                   ) : (

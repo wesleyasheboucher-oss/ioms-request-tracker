@@ -1,29 +1,28 @@
 @import "tailwindcss";
 
-/* Haunted night theme. Always dark: it's Halloween all the time here. */
+/* Winter night theme. Always dark so the lights and snow show up. */
 :root {
   color-scheme: dark;
-  --bg: #0f0b16;
-  --surface: #1a1424;
-  --surface-2: #241b31;
-  --border: #382c4a;
-  --text: #f3eefa;
-  --muted: #a99bbd;
-  --accent: #ff7a1a;
-  --accent-soft: #3a2014;
-  --accent-ink: #1a0b02;
-  --good: #7ee36b;
-  --good-soft: #17301a;
-  --warn: #ffc94d;
+  --bg: #0a1512;
+  --surface: #11221c;
+  --surface-2: #183026;
+  --border: #284438;
+  --text: #f5f2ea;
+  --muted: #9db4a8;
+  --accent: #e8394a;
+  --accent-soft: #3d151b;
+  --accent-ink: #fff8f2;
+  --good: #6fe08a;
+  --good-soft: #15321f;
+  --warn: #ffcf5a;
   --warn-soft: #33290f;
-  --bad: #ff5c6c;
+  --bad: #ff7b86;
   --bad-soft: #3a1520;
-  --gold: #ffc94d;
-  --silver: #b8b2c8;
+  --gold: #f5c84c;
+  --silver: #c9d3d0;
   --bronze: #c9783b;
-  --ghost: #f1ecff;
-  --bone: #ece4cf;
-  --haunt: #9b6bff;
+  --snow: #f7fbff;
+  --frost: #8fd3ff;
 }
 
 @theme inline {
@@ -45,10 +44,11 @@
   --color-gold: var(--gold);
   --color-silver: var(--silver);
   --color-bronze: var(--bronze);
-  --color-haunt: var(--haunt);
+  --color-snow: var(--snow);
+  --color-frost: var(--frost);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-spooky: var(--font-creepster);
+  --font-festive: var(--font-christmas);
 }
 
 body {
@@ -58,9 +58,8 @@ body {
     radial-gradient(1px 1px at 68% 9%, #fff6 50%, transparent 51%),
     radial-gradient(1.5px 1.5px at 84% 40%, #fff5 50%, transparent 51%),
     radial-gradient(1px 1px at 33% 62%, #fff4 50%, transparent 51%),
-    radial-gradient(1px 1px at 52% 86%, #fff4 50%, transparent 51%),
-    radial-gradient(ellipse 80% 50% at 85% -10%, #3b1f5c88, transparent 70%),
-    radial-gradient(ellipse 60% 40% at 0% 110%, #5a2a0a55, transparent 70%),
+    radial-gradient(ellipse 80% 50% at 85% -10%, #12406088, transparent 70%),
+    radial-gradient(ellipse 60% 40% at 0% 110%, #6a141f44, transparent 70%),
     var(--bg);
   background-attachment: fixed;
 }
@@ -93,36 +92,28 @@ body {
   0%, 100% { translate: 0 0; }
   50% { translate: 0 -10px; }
 }
-@keyframes drift {
-  from { transform: translateX(-20vw); }
-  to { transform: translateX(115vw); }
+@keyframes snow {
+  0% { transform: translate(0, -5vh); }
+  50% { transform: translate(24px, 50vh); }
+  100% { transform: translate(-12px, 105vh); }
 }
-@keyframes bat-fly {
-  0% { transform: translate(-12vw, 0); }
-  30% { transform: translate(50vw, -30px); }
-  60%, 100% { transform: translate(115vw, 10px); }
+@keyframes spin {
+  to { rotate: 360deg; }
 }
-@keyframes flap {
-  0%, 100% { scale: 1 1; }
-  50% { scale: 1 0.35; }
-}
-@keyframes flicker {
+@keyframes twinkle {
   0%, 100% { opacity: 1; }
-  38% { opacity: 0.75; }
-  40% { opacity: 1; }
-  62% { opacity: 0.85; }
-  78% { opacity: 0.55; }
-  80% { opacity: 1; }
+  45% { opacity: 0.45; }
+  55% { opacity: 0.9; }
 }
 @keyframes swing {
   0%, 100% { rotate: 7deg; }
   50% { rotate: -7deg; }
 }
-@keyframes moon-glow {
-  0%, 100% { filter: drop-shadow(0 0 18px #f6e7b566); }
-  50% { filter: drop-shadow(0 0 32px #f6e7b5aa); }
+@keyframes glow {
+  0%, 100% { filter: drop-shadow(0 0 8px #f5c84c66); }
+  50% { filter: drop-shadow(0 0 18px #f5c84ccc); }
 }
-@keyframes boo-pop {
+@keyframes pop {
   0% { scale: 0.2; opacity: 0; rotate: -14deg; }
   60% { scale: 1.15; opacity: 1; rotate: 5deg; }
   100% { scale: 1; opacity: 1; rotate: 0deg; }
@@ -142,21 +133,21 @@ body {
 }
 
 .anim-bob { animation: bob 3.6s ease-in-out infinite; }
-.anim-drift { animation: drift 50s linear infinite; }
-.anim-bat-fly { animation: bat-fly 25s linear infinite; }
-.anim-flap { animation: flap 0.35s ease-in-out infinite; transform-origin: center; }
-.anim-flicker { animation: flicker 2.8s infinite; }
+.anim-snow { animation: snow 16s linear infinite; }
+.anim-spin { animation: spin 9s linear infinite; }
+.anim-twinkle { animation: twinkle 2.2s ease-in-out infinite; }
 .anim-swing { animation: swing 3.2s ease-in-out infinite; transform-origin: top center; }
-.anim-moon { animation: moon-glow 6s ease-in-out infinite; }
-.anim-boo { animation: boo-pop 0.6s cubic-bezier(0.3, 1.4, 0.5, 1) both; }
+.anim-glow { animation: glow 3s ease-in-out infinite; }
+.anim-pop { animation: pop 0.6s cubic-bezier(0.3, 1.4, 0.5, 1) both; }
 .anim-rise { animation: rise 2.2s ease-out both; }
 .anim-slide-in { animation: slide-in 0.25s ease-out both; }
 
-.pumpkin-bar {
+/* Candy-cane stripes for a meter that has reached a tier. */
+.candy-bar {
   background: repeating-linear-gradient(
     -45deg,
     var(--accent) 0 10px,
-    #ff9a4a 10px 20px
+    var(--snow) 10px 20px
   );
   background-size: 40px 100%;
   animation: shimmer 1.4s linear infinite;
@@ -168,5 +159,5 @@ body {
     animation: none !important;
     transition: none !important;
   }
-  .anim-drift, .anim-bat-fly { display: none; }
+  .anim-snow { display: none; }
 }

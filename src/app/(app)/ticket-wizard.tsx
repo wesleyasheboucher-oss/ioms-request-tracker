@@ -20,7 +20,7 @@ import {
   SOURCES,
 } from "@/lib/config";
 import { contactCounts, pointsFor, scoreReason, type ContactFlags } from "@/lib/scoring";
-import { Ghost, Pumpkin, Skeleton } from "@/components/spooky";
+import { Gift, Snowflake, Snowman, Star } from "@/components/festive";
 import { logTicket, lookupOrder, type PriorLog, type TicketInput } from "../actions";
 
 type Draft = {
@@ -234,28 +234,31 @@ export function TicketWizard() {
       <div className="card relative flex flex-col items-center overflow-hidden px-6 py-12 text-center">
         {done.points > 0 && (
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40" aria-hidden>
-            {[12, 30, 50, 68, 86].map((left, i) => (
-              <Pumpkin
-                key={left}
-                className="anim-rise absolute bottom-0 w-8"
-                style={{ left: `${left}%`, animationDelay: `${i * 0.15}s` }}
-              />
-            ))}
+            {[12, 30, 50, 68, 86].map((left, i) => {
+              const Icon = i % 2 ? Snowflake : Star;
+              return (
+                <Icon
+                  key={left}
+                  className="anim-rise absolute bottom-0 w-8"
+                  style={{ left: `${left}%`, animationDelay: `${i * 0.15}s` }}
+                />
+              );
+            })}
           </div>
         )}
         {done.points > 0 ? (
-          <div className="anim-boo mb-3">
-            <Ghost className="anim-bob w-24 drop-shadow-[0_0_24px_#9b6bff99]" />
+          <div className="anim-pop mb-3">
+            <Gift className="anim-bob w-24 drop-shadow-[0_0_24px_#f5c84c88]" />
           </div>
         ) : (
-          <div className="anim-boo mb-3">
-            <Skeleton className="anim-swing h-28" />
+          <div className="anim-pop mb-3">
+            <Snowman className="anim-bob h-28" />
           </div>
         )}
         <p
-          className={`font-spooky text-5xl tracking-wide ${done.points > 0 ? "text-good" : "text-muted"}`}
+          className={`font-festive text-5xl tracking-wide ${done.points > 0 ? "text-good" : "text-muted"}`}
         >
-          {done.points > 0 ? `Boo! +${done.points}` : "+0"}
+          {done.points > 0 ? `Ho ho ho! +${done.points}` : "+0"}
         </p>
         <h2 className="mt-2 text-xl font-semibold">
           {done.points > 0 ? "Completed request logged" : "Request logged"}

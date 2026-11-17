@@ -36,7 +36,7 @@ export default async function ImportPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-spooky text-4xl tracking-wide">Import iOMS requests</h1>
+        <h1 className="font-festive text-4xl tracking-wide">Import iOMS requests</h1>
         <p className="max-w-2xl text-sm text-muted">
           Upload an iOMS export (Excel or CSV). Only a date is required; other columns are optional. Requests
           marked resolved score {POINTS_PER_COMPLETED_REQUEST} pts for the rep they belong to. Rows without a matching rep are kept as

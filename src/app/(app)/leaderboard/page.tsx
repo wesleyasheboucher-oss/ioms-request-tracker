@@ -9,7 +9,7 @@ import {
   TIERS,
 } from "@/lib/config";
 import { TierBadge, TierMeter } from "@/components/tier-meter";
-import { Pumpkin, Skeleton } from "@/components/spooky";
+import { Ornament, Star } from "@/components/festive";
 import { AutoRefresh } from "./auto-refresh";
 
 export default async function LeaderboardPage({ searchParams }: PageProps<"/leaderboard">) {
@@ -37,9 +37,9 @@ export default async function LeaderboardPage({ searchParams }: PageProps<"/lead
 
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="relative pr-14">
-          <Skeleton className="anim-swing absolute -top-6 right-0 h-24" />
+          <Ornament string className="anim-swing absolute -top-6 right-1 h-24" />
           <p className="text-xs font-semibold tracking-widest text-accent uppercase">The Scream Team</p>
-          <h1 className="font-spooky text-5xl tracking-wide">Leaderboard</h1>
+          <h1 className="font-festive text-5xl tracking-wide">Leaderboard</h1>
           <p className="text-sm text-muted">
             Week of {formatDay(week)} – {formatDay(addDays(week, 4), { year: "numeric" })}
             {isCurrent && " · updates every minute"}
@@ -202,7 +202,7 @@ function PodiumCard({ s, place, isMe }: { s: Standing; place: 1 | 2 | 3; isMe: b
     <div className={`card flex flex-col items-center px-4 pb-5 text-center ${st.height} ${place === 1 ? "order-first sm:order-none" : ""}`}>
       <div className={`relative mt-4 rounded-full ring-4 ${st.ring}`}>
         {place === 1 && (
-          <Pumpkin className="anim-bob absolute -top-9 left-1/2 w-10 -translate-x-1/2 drop-shadow-[0_0_10px_#ff7a1a]" />
+          <Star className="anim-bob anim-glow absolute -top-9 left-1/2 w-10 -translate-x-1/2" />
         )}
         <Avatar name={s.name} size="lg" />
         <span

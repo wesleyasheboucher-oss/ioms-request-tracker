@@ -23,7 +23,7 @@ export default async function MyTicketsPage({ searchParams }: PageProps<"/my-tic
     <div>
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-spooky text-4xl tracking-wide">My tickets</h1>
+          <h1 className="font-festive text-4xl tracking-wide">My tickets</h1>
           <p className="text-sm text-muted">
             {tickets.length} logged · {completed} completed · {points} pts
           </p>

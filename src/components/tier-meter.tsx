@@ -1,5 +1,5 @@
 import { TIERS } from "@/lib/config";
-import { Ghost, Moon, Pumpkin } from "./spooky";
+import { Gift, Ornament, Star } from "./festive";
 
 const SCALE_MAX = Math.max(...TIERS.map((t) => t.ptsPerDay)) * 1.1;
 
@@ -11,7 +11,7 @@ export function TierMeter({ ptsPerDay, labels = false }: { ptsPerDay: number; la
     <div className={labels ? "pb-5" : undefined}>
       <div className="relative h-2.5 rounded-full bg-surface-2">
         <div
-          className={`h-full rounded-full transition-[width] duration-700 ${reached ? "pumpkin-bar" : "bg-accent/45"}`}
+          className={`h-full rounded-full transition-[width] duration-700 ${reached ? "candy-bar" : "bg-accent/45"}`}
           style={{ width: pct(ptsPerDay) }}
         />
         {TIERS.map((t) => (
@@ -33,10 +33,10 @@ export function TierMeter({ ptsPerDay, labels = false }: { ptsPerDay: number; la
   );
 }
 
-const TIER_ICON: Record<string, typeof Ghost> = {
-  [TIERS[0].name]: Pumpkin,
-  [TIERS[1].name]: Moon,
-  [TIERS[2].name]: Ghost,
+const TIER_ICON: Record<string, typeof Star> = {
+  [TIERS[0].name]: Star,
+  [TIERS[1].name]: Gift,
+  [TIERS[2].name]: Ornament,
 };
 
 export function TierBadge({ name }: { name: string | null }) {

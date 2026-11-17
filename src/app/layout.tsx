@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { Creepster, Geist, Geist_Mono } from "next/font/google";
-import { SpookyBackdrop } from "@/components/spooky";
+import { Geist, Geist_Mono, Mountains_of_Christmas } from "next/font/google";
+import { FestiveBackdrop } from "@/components/festive";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 // Display font for headings only; body text stays in Geist for readability.
-const creepster = Creepster({
-  variable: "--font-creepster",
-  weight: "400",
+const christmas = Mountains_of_Christmas({
+  variable: "--font-christmas",
+  weight: "700",
   subsets: ["latin"],
 });
 
@@ -29,10 +29,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${creepster.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${christmas.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <SpookyBackdrop />
+        <FestiveBackdrop />
         <div className="relative z-10 flex flex-1 flex-col">{children}</div>
       </body>
     </html>
