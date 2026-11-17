@@ -9,8 +9,9 @@ import {
   TIERS,
 } from "@/lib/config";
 import { TierBadge, TierMeter } from "@/components/tier-meter";
-import { Ornament, Star } from "@/components/festive";
+import { Ornament } from "@/components/festive";
 import { AutoRefresh } from "./auto-refresh";
+import { LeaderTree } from "./leader-tree";
 
 export default async function LeaderboardPage({ searchParams }: PageProps<"/leaderboard">) {
   const user = await requireUser();
@@ -22,8 +23,6 @@ export default async function LeaderboardPage({ searchParams }: PageProps<"/lead
 
   const standings = await weeklyStandings(week);
   const rules = weekRules(week);
-  const active = standings.filter((s) => s.daysWorked > 0);
-  const podium = active.slice(0, 3);
   const totals = {
     completed: standings.reduce((s, r) => s + r.completed, 0),
     points: Math.round(standings.reduce((s, r) => s + r.points, 0) * 10) / 10,
@@ -70,22 +69,7 @@ export default async function LeaderboardPage({ searchParams }: PageProps<"/lead
         <Tile label="Prizes earned" value={`$${totals.prizes}`} accent />
       </div>
 
-      {podium.length > 0 && (
-        <div className="grid items-end gap-3 sm:grid-cols-3">
-          {[podium[1], podium[0], podium[2]].map((s, i) =>
-            s ? (
-              <PodiumCard
-                key={s.userId}
-                s={s}
-                place={i === 1 ? 1 : i === 0 ? 2 : 3}
-                isMe={s.userId === user.id}
-              />
-            ) : (
-              <div key={i} className="hidden sm:block" />
-            ),
-          )}
-        </div>
-      )}
+      <LeaderTree standings={standings} meId={user.id} />
 
       <div className="card overflow-x-auto">
         <table className="w-full min-w-[760px] text-sm">
@@ -190,42 +174,6 @@ function Tile({ label, value, accent }: { label: string; value: string; accent?:
   );
 }
 
-const PLACE_STYLE = {
-  1: { ring: "ring-gold", bg: "bg-gold", height: "sm:pt-10", label: "1st" },
-  2: { ring: "ring-silver", bg: "bg-silver", height: "sm:pt-6", label: "2nd" },
-  3: { ring: "ring-bronze", bg: "bg-bronze", height: "sm:pt-4", label: "3rd" },
-} as const;
-
-function PodiumCard({ s, place, isMe }: { s: Standing; place: 1 | 2 | 3; isMe: boolean }) {
-  const st = PLACE_STYLE[place];
-  return (
-    <div className={`card flex flex-col items-center px-4 pb-5 text-center ${st.height} ${place === 1 ? "order-first sm:order-none" : ""}`}>
-      <div className={`relative mt-4 rounded-full ring-4 ${st.ring}`}>
-        {place === 1 && (
-          <Star className="anim-bob anim-glow absolute -top-9 left-1/2 w-10 -translate-x-1/2" />
-        )}
-        <Avatar name={s.name} size="lg" />
-        <span
-          className={`absolute -right-1 -bottom-1 grid size-7 place-items-center rounded-full text-xs font-bold text-white ${st.bg}`}
-        >
-          {place}
-        </span>
-      </div>
-      <p className="mt-3 font-semibold">
-        {s.name}
-        {isMe && <span className="ml-1.5 text-xs text-accent">you</span>}
-      </p>
-      <p className="text-3xl font-bold tabular-nums">{s.ptsPerDay}</p>
-      <p className="text-xs text-muted">
-        pts/day · {s.completed} completed
-      </p>
-      <div className="mt-2">
-        <TierBadge name={s.tier?.name ?? null} />
-      </div>
-    </div>
-  );
-}
-
 function Status({ s, minDays }: { s: Standing; minDays: number }) {
   if (s.daysWorked === 0) return <span className="text-xs text-muted">No days logged</span>;
   if (s.heldDays.length > 0) {
@@ -248,7 +196,7 @@ function Status({ s, minDays }: { s: Standing; minDays: number }) {
   );
 }
 
-function Avatar({ name, size = "sm" }: { name: string; size?: "sm" | "lg" }) {
+function Avatar({ name }: { name: string }) {
   const initials = name
     .split(/\s+/)
     .map((p) => p[0])
@@ -257,9 +205,7 @@ function Avatar({ name, size = "sm" }: { name: string; size?: "sm" | "lg" }) {
     .toUpperCase();
   return (
     <span
-      className={`grid shrink-0 place-items-center rounded-full bg-accent-soft font-semibold text-accent ${
-        size === "lg" ? "size-16 text-xl" : "size-8 text-xs"
-      }`}
+      className="grid size-8 shrink-0 place-items-center rounded-full bg-accent-soft text-xs font-semibold text-accent"
     >
       {initials}
     </span>
